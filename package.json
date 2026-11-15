@@ -1,0 +1,15 @@
+{
+  "name": "surgeon-3d",
+  "version": "1.0.0",
+  "description": "Surgeon 3D 50 Operations",
+  "scripts": {
+    "build": "echo 'Ready'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}
