@@ -90,7 +90,7 @@
   <div id="hud">
     <div class="panel">
       <div id="lvl-badge">ОПЕРАЦИЯ #1</div>
-      <div id="task-text">Загрузка 3D-модели...</div>
+      <div id="task-text">Загрузка...</div>
       <div id="step-counter">Этап 1 из 3</div>
       <div id="progress-wrap"><div id="action-fill"></div></div>
     </div>
@@ -116,7 +116,6 @@
   </div>
 
   <script src="three.min.js"></script>
-  <script src="GLTFLoader.js"></script>
   <script>
     const OPERATIONS = [];
     const ZONES = [
@@ -232,7 +231,7 @@
 
     let camYaw = 0.22;
     let camPitch = 0.85;
-    let camDist = 1.15;
+    let camDist = 1.18;
     const camLookTarget = new THREE.Vector3(0.05, 1.00, -0.15);
 
     let maxBloodTime = 60;
@@ -298,6 +297,37 @@
       updateGuide();
     });
 
+    function createSkinTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#d99e80';
+      ctx.fillRect(0, 0, 512, 512);
+
+      for (let i = 0; i < 6500; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(160,92,68,0.07)' : 'rgba(255,220,198,0.07)';
+        ctx.fillRect(x, y, 2, 2);
+      }
+      ctx.strokeStyle = 'rgba(70, 100, 140, 0.06)';
+      ctx.lineWidth = 1.2;
+      for (let v = 0; v < 14; v++) {
+        ctx.beginPath();
+        let vx = Math.random() * 512, vy = Math.random() * 512;
+        ctx.moveTo(vx, vy);
+        for (let s = 0; s < 5; s++) {
+          vx += (Math.random() - 0.5) * 50;
+          vy += (Math.random() - 0.5) * 50;
+          ctx.lineTo(vx, vy);
+        }
+        ctx.stroke();
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
     function createOrganTexture(baseHex, veinHex) {
       const c = document.createElement('canvas');
       c.width = 256; c.height = 256;
@@ -342,7 +372,7 @@
 
       raycaster = new THREE.Raycaster();
 
-      scene.add(new THREE.HemisphereLight(0xeef6ff, 0x263545, 0.9));
+      scene.add(new THREE.HemisphereLight(0xeef6ff, 0x263545, 0.88));
       const keyLight = new THREE.DirectionalLight(0xfff5e8, 0.85);
       keyLight.position.set(1.2, 2.5, 1.0);
       keyLight.castShadow = true;
@@ -391,7 +421,7 @@
       donorBox.position.set(-0.44, 0.94, -0.22);
       scene.add(donorBox);
 
-      loadCleanHumanModel();
+      buildPatientBody();
       buildRealisticTools();
 
       laserBeam = new THREE.Mesh(
@@ -410,58 +440,141 @@
       camera.lookAt(camLookTarget);
     }
 
-    // ЗАГРУЗКА ЧИСТОЙ 3D-МОДЕЛИ ЧЕЛОВЕКА (Xbot.glb) С ОПУЩЕННЫМИ РУКАМИ И ПОЛОЖЕНИЕМ НА СПИНЕ
-    function loadCleanHumanModel() {
-      const loader = new THREE.GLTFLoader();
-
-      loader.load('human.glb', gltf => {
-        const model = gltf.scene;
-
-        // Опускаем руки вдоль туловища через кости скелета (убираем Т-позу)
-        model.traverse(obj => {
-          if (obj.isBone) {
-            if (obj.name.includes('LeftArm')) obj.rotation.z = -1.25;
-            if (obj.name.includes('RightArm')) obj.rotation.z = 1.25;
-            if (obj.name.includes('LeftForeArm')) obj.rotation.z = -0.12;
-            if (obj.name.includes('RightForeArm')) obj.rotation.z = 0.12;
-          }
-          if (obj.isMesh) {
-            obj.castShadow = true;
-            obj.receiveShadow = true;
-            // Заменяем металлический PBR на нормальный матовый материал кожи и суставов без черных пятен
-            const isJoint = obj.name.toLowerCase().includes('joint') || obj.name.toLowerCase().includes('alpha_joints');
-            obj.material = new THREE.MeshStandardMaterial({
-              color: isJoint ? 0xb57b5e : 0xdca082,
-              roughness: 0.62,
-              metalness: 0.02
-            });
-          }
-        });
-
-        // Кладем строго на спину лицом вверх, головой в сторону -Z (к верхнему краю экрана)
-        model.rotation.set(-Math.PI / 2, 0, Math.PI);
-        model.scale.set(0.92, 0.92, 0.92);
-        model.updateMatrixWorld(true);
-
-        // Автовыравнивание по реальному габаритному боксу, чтобы спина лежала ровно на столе (y = 0.865)
-        const box = new THREE.Box3().setFromObject(model);
-        const centerX = (box.min.x + box.max.x) / 2;
-        model.position.x -= centerX;
-        model.position.y += (0.865 - box.min.y);
-        // Голова модели на z = -0.68, грудь на z = -0.22, живот на z = 0.02
-        model.position.z += (-0.68 - box.min.z);
-
-        scene.add(model);
-
-        // Хирургическая простыня ниже пояса
-        const drape = new THREE.Mesh(
-          new THREE.BoxGeometry(0.46, 0.16, 0.82),
-          new THREE.MeshStandardMaterial({ color: 0x16697a, roughness: 0.85 })
-        );
-        drape.position.set(0, 0.95, 0.56);
-        drape.receiveShadow = true;
-        scene.add(drape);
+    // ГАРАНТИРОВАННАЯ 3D-МОДЕЛЬ ПАЦИЕНТА НА СПИНЕ (никогда не пропадает, с правильными пропорциями)
+    function buildPatientBody() {
+      const patient = new THREE.Group();
+      const skinMat = new THREE.MeshStandardMaterial({
+        map: createSkinTexture(),
+        roughness: 0.62,
+        metalness: 0.02
       });
+
+      // Цельный скульптурный торс (от таза z=0.35 до основания шеи z=-0.42)
+      const torsoCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0.955, 0.34),
+        new THREE.Vector3(0, 0.950, 0.14),
+        new THREE.Vector3(0, 0.968, -0.10),
+        new THREE.Vector3(0, 0.975, -0.30),
+        new THREE.Vector3(0, 0.960, -0.43)
+      ]);
+      const torsoGeo = new THREE.TubeGeometry(torsoCurve, 40, 1, 32, false);
+      const pos = torsoGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const vx = pos.getX(i);
+        const vy = pos.getY(i);
+        const vz = pos.getZ(i);
+        const t = Math.max(0, Math.min(1, (0.34 - vz) / 0.77)); // 0=таз, 0.65=грудь, 1=шея
+
+        const waist = 1 - 0.14 * Math.exp(-Math.pow((t - 0.32) / 0.16, 2));
+        const chest = 1 + 0.26 * Math.exp(-Math.pow((t - 0.72) / 0.22, 2));
+        const neck = t > 0.83 ? (1 - 0.64 * Math.pow((t - 0.83) / 0.17, 1.4)) : 1;
+
+        const scaleX = 0.175 * waist * chest * neck;
+        const scaleY = 0.095 * (1 + 0.18 * Math.exp(-Math.pow((t - 0.70) / 0.24, 2))) * (t > 0.85 ? 0.62 : 1);
+
+        const cY = 0.96 + 0.01 * Math.sin(t * Math.PI);
+        let nx = vx * scaleX;
+        let ny = cY + (vy - cY) * scaleY;
+
+        // Рельеф грудных мышц
+        if (ny > cY && t > 0.52 && t < 0.76) {
+          const pec = Math.sin(((t - 0.52) / 0.24) * Math.PI) * Math.sin(Math.min(1, Math.abs(nx) / 0.18) * Math.PI);
+          ny += 0.012 * pec;
+        }
+        pos.setXYZ(i, nx, ny, vz);
+      }
+      torsoGeo.computeVertexNormals();
+      const torsoMesh = new THREE.Mesh(torsoGeo, skinMat);
+      torsoMesh.castShadow = true;
+      torsoMesh.receiveShadow = true;
+      patient.add(torsoMesh);
+
+      // Шея
+      const neckMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.056, 0.068, 0.11, 24), skinMat);
+      neckMesh.rotation.x = Math.PI / 2;
+      neckMesh.position.set(0, 0.965, -0.46);
+      patient.add(neckMesh);
+
+      // Скульптурная голова с лицом, носом, бровями, глазами, ушами и волосами
+      const headGroup = new THREE.Group();
+      headGroup.position.set(0, 0.995, -0.58);
+
+      const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.098, 28, 28), skinMat);
+      cranium.scale.set(0.92, 1.04, 1.16);
+      headGroup.add(cranium);
+
+      const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.078, 20, 20), skinMat);
+      jaw.scale.set(0.86, 0.95, 1.05);
+      jaw.position.set(0, -0.008, 0.036);
+      headGroup.add(jaw);
+
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.036, 12), skinMat);
+      nose.position.set(0, 0.098, 0.008);
+      headGroup.add(nose);
+
+      const browMat = new THREE.MeshStandardMaterial({ color: 0x3a2618, roughness: 0.85 });
+      const lidMat = new THREE.MeshStandardMaterial({ color: 0xb57659, roughness: 0.58 });
+      [-0.032, 0.032].forEach(ex => {
+        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.005, 0.006), browMat);
+        brow.position.set(ex, 0.092, -0.022);
+        const lid = new THREE.Mesh(new THREE.SphereGeometry(0.012, 10, 10), lidMat);
+        lid.scale.set(1.2, 0.35, 0.7);
+        lid.position.set(ex, 0.088, -0.008);
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.020, 12, 12), skinMat);
+        ear.scale.set(0.32, 0.65, 1.15);
+        ear.position.set(ex * 2.85, 0.005, 0.005);
+        headGroup.add(brow, lid, ear);
+      });
+
+      const lips = new THREE.Mesh(
+        new THREE.SphereGeometry(0.018, 12, 12),
+        new THREE.MeshStandardMaterial({ color: 0xb05e5e, roughness: 0.45 })
+      );
+      lips.scale.set(1.3, 0.35, 0.5);
+      lips.position.set(0, 0.076, 0.048);
+      headGroup.add(lips);
+
+      const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(0.100, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.52),
+        new THREE.MeshStandardMaterial({ color: 0x261a12, roughness: 0.88 })
+      );
+      hair.rotation.x = -Math.PI * 0.78;
+      hair.scale.set(0.95, 1.08, 1.16);
+      hair.position.set(0, -0.004, -0.005);
+      headGroup.add(hair);
+
+      patient.add(headGroup);
+
+      // Плечи и руки вдоль тела
+      [-1, 1].forEach(side => {
+        const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.062, 18, 18), skinMat);
+        shoulder.scale.set(0.95, 0.85, 1.2);
+        shoulder.position.set(side * 0.215, 0.968, -0.31);
+        patient.add(shoulder);
+
+        const armCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.215, 0.965, -0.30),
+          new THREE.Vector3(side * 0.252, 0.935, -0.10),
+          new THREE.Vector3(side * 0.262, 0.920, 0.12),
+          new THREE.Vector3(side * 0.252, 0.915, 0.32)
+        ]);
+        const armMesh = new THREE.Mesh(new THREE.TubeGeometry(armCurve, 26, 0.042, 16, false), skinMat);
+        armMesh.castShadow = true;
+        patient.add(armMesh);
+      });
+
+      // Хирургическая простыня ниже пояса
+      const drape = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.19, 0.22, 0.85, 28),
+        new THREE.MeshStandardMaterial({ color: 0x16697a, roughness: 0.85 })
+      );
+      drape.rotation.x = Math.PI / 2;
+      drape.scale.set(1.15, 1, 0.55);
+      drape.position.set(0, 0.94, 0.66);
+      drape.receiveShadow = true;
+      patient.add(drape);
+
+      scene.add(patient);
     }
 
     function createDetailedTool(id, label, pos, builderFn) {
@@ -570,63 +683,79 @@
       });
     }
 
+    // АНАТОМИЧЕСКИ ТОЧНЫЕ 3D-МОДЕЛИ ОРГАНОВ И ИХ ПРАВИЛЬНАЯ ОРИЕНТАЦИЯ
     function createSingleOrganModel(type) {
       const group = new THREE.Group();
       if (type === 'chest') {
-        const heartTex = createOrganTexture('#8c1124', '#ff3b5c');
-        const heartMat = new THREE.MeshStandardMaterial({ map: heartTex, roughness: 0.32, metalness: 0.08 });
+        // Сердце расположено косо: основанием вверх-вправо (-Z, -X), верхушкой вниз-влево (+Z, +X)
+        const heartTex = createOrganTexture('#8f1126', '#ff4d6d');
+        const heartMat = new THREE.MeshStandardMaterial({ map: heartTex, roughness: 0.30, metalness: 0.08 });
         const arteryMat = new THREE.MeshStandardMaterial({ color: 0xd92b3a, roughness: 0.28 });
         const veinMat = new THREE.MeshStandardMaterial({ color: 0x2b5998, roughness: 0.32 });
 
+        const heartBody = new THREE.Group();
         const heartProfile = [
-          new THREE.Vector2(0.00, -0.055),
-          new THREE.Vector2(0.025, -0.030),
-          new THREE.Vector2(0.044, 0.005),
-          new THREE.Vector2(0.046, 0.032),
-          new THREE.Vector2(0.030, 0.048),
-          new THREE.Vector2(0.00, 0.052)
+          new THREE.Vector2(0.00, -0.054), // Верхушка сердца (apex)
+          new THREE.Vector2(0.024, -0.028),
+          new THREE.Vector2(0.042, 0.006),
+          new THREE.Vector2(0.044, 0.032),
+          new THREE.Vector2(0.028, 0.046),
+          new THREE.Vector2(0.00, 0.050)
         ];
+        // В LatheGeometry ось Y идет от -0.054 (острая верхушка) до +0.050 (основание)
         const myocardium = new THREE.Mesh(new THREE.LatheGeometry(heartProfile, 28), heartMat);
-        myocardium.rotation.set(Math.PI / 2, 0, -0.35);
-        myocardium.scale.set(1.0, 1.0, 0.72);
-        group.add(myocardium);
+        // Поворачиваем на -PI/2 по X, чтобы основание смотрело в сторону головы (-Z), а острая верхушка вниз (+Z)
+        myocardium.rotation.set(-Math.PI / 2, 0, 0);
+        myocardium.scale.set(0.95, 1.0, 0.72);
+        heartBody.add(myocardium);
 
-        const aortaArch = new THREE.Mesh(new THREE.TorusGeometry(0.020, 0.0085, 10, 18, Math.PI * 1.15), arteryMat);
-        aortaArch.position.set(-0.004, 0.016, -0.048);
-        aortaArch.rotation.z = 0.25;
-        const venaCava = new THREE.Mesh(new THREE.CylinderGeometry(0.0065, 0.0075, 0.040, 10), veinMat);
+        // Дуга аорты сверху (у основания сердца, со стороны головы -Z)
+        const aortaArch = new THREE.Mesh(new THREE.TorusGeometry(0.019, 0.008, 10, 18, Math.PI * 1.15), arteryMat);
+        aortaArch.position.set(0.004, 0.014, -0.048);
+        aortaArch.rotation.y = Math.PI * 0.2;
+        // Верхняя полая вена справа от аорты (-X)
+        const venaCava = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.007, 0.038, 10), veinMat);
         venaCava.rotation.x = Math.PI / 2;
-        venaCava.position.set(-0.024, 0.012, -0.042);
-        group.add(aortaArch, venaCava);
+        venaCava.position.set(-0.018, 0.010, -0.044);
+        heartBody.add(aortaArch, venaCava);
+
+        // Наклоняем верхушку сердца влево (+X у лежащего на спине пациента) на ~30 градусов
+        heartBody.rotation.y = 0.45;
+        group.add(heartBody);
       } else if (type === 'abdomen') {
+        // Печень: крупная правая доля (-X у пациента на спине) и меньшая левая доля (+X)
         const liverMat = new THREE.MeshStandardMaterial({ map: createOrganTexture('#752014', '#420d06'), roughness: 0.3 });
-        const rightLobe = new THREE.Mesh(new THREE.SphereGeometry(0.060, 22, 22), liverMat);
-        rightLobe.scale.set(1.25, 0.48, 0.88);
-        rightLobe.position.set(-0.022, 0, 0);
-        const leftLobe = new THREE.Mesh(new THREE.SphereGeometry(0.042, 18, 18), liverMat);
-        leftLobe.scale.set(1.15, 0.42, 0.75);
-        leftLobe.position.set(0.035, 0.004, -0.01);
+        const rightLobe = new THREE.Mesh(new THREE.SphereGeometry(0.058, 22, 22), liverMat);
+        rightLobe.scale.set(1.25, 0.48, 0.85);
+        rightLobe.position.set(-0.026, 0, 0);
+        const leftLobe = new THREE.Mesh(new THREE.SphereGeometry(0.040, 18, 18), liverMat);
+        leftLobe.scale.set(1.15, 0.42, 0.72);
+        leftLobe.position.set(0.034, 0.004, -0.008);
         group.add(rightLobe, leftLobe);
       } else if (type === 'head') {
+        // Два полушария головного мозга (левое и правое, разделенные продольной щелью)
         const brainMat = new THREE.MeshStandardMaterial({ map: createOrganTexture('#e391a1', '#a84d60'), roughness: 0.45 });
-        [-0.028, 0.028].forEach(hx => {
-          const hemi = new THREE.Mesh(new THREE.SphereGeometry(0.046, 22, 22), brainMat);
+        [-0.026, 0.026].forEach(hx => {
+          const hemi = new THREE.Mesh(new THREE.SphereGeometry(0.044, 22, 22), brainMat);
           hemi.scale.set(0.75, 0.70, 1.32);
           hemi.position.x = hx;
           group.add(hemi);
         });
       } else if (type === 'lungs') {
+        // Правое (-X, чуть шире) и левое (+X, с сердечной вырезкой) легкие
         const lungMat = new THREE.MeshStandardMaterial({ map: createOrganTexture('#cf6579', '#8f3547'), roughness: 0.46 });
-        [-0.038, 0.038].forEach(lx => {
-          const lung = new THREE.Mesh(new THREE.SphereGeometry(0.050, 20, 20), lungMat);
-          lung.scale.set(0.72, 0.62, 1.42);
-          lung.position.x = lx;
-          group.add(lung);
-        });
+        const rightLung = new THREE.Mesh(new THREE.SphereGeometry(0.052, 20, 20), lungMat);
+        rightLung.scale.set(0.75, 0.62, 1.42);
+        rightLung.position.x = -0.042;
+        const leftLung = new THREE.Mesh(new THREE.SphereGeometry(0.048, 20, 20), lungMat);
+        leftLung.scale.set(0.68, 0.60, 1.38);
+        leftLung.position.x = 0.044;
+        group.add(rightLung, leftLung);
       } else {
+        // Почка бобовидной формы
         const kidneyMat = new THREE.MeshStandardMaterial({ map: createOrganTexture('#6b1220', '#3d0811'), roughness: 0.3 });
-        const kidney = new THREE.Mesh(new THREE.SphereGeometry(0.048, 22, 22), kidneyMat);
-        kidney.scale.set(0.75, 0.58, 1.32);
+        const kidney = new THREE.Mesh(new THREE.SphereGeometry(0.046, 22, 22), kidneyMat);
+        kidney.scale.set(0.72, 0.56, 1.32);
         group.add(kidney);
       }
       return group;
@@ -637,26 +766,30 @@
       anatomyGroup.visible = false;
 
       if (zoneId === 'chest' || zoneId === 'lungs') {
+        // Легкие по бокам грудной полости + трахея сверху
         const bgLungs = createSingleOrganModel('lungs');
-        bgLungs.position.set(0, ySurface, zCenter);
+        bgLungs.position.set(0, ySurface - 0.002, zCenter);
         if (zoneId === 'lungs') {
           targetOrganMesh = bgLungs;
         } else {
           anatomyGroup.add(bgLungs);
           targetOrganMesh = createSingleOrganModel('chest');
-          targetOrganMesh.position.set(0.010, ySurface + 0.010, zCenter + 0.01);
+          // Сердце лежит между легкими со смещением влево (+0.018 по X) и чуть ниже середины грудины
+          targetOrganMesh.position.set(0.018, ySurface + 0.010, zCenter + 0.012);
         }
       } else if (zoneId === 'abdomen' || zoneId === 'kidney') {
+        // Желудок слева (+X у пациента на спине), печень справа (-X)
         const stomach = new THREE.Mesh(
-          new THREE.SphereGeometry(0.042, 16, 16),
+          new THREE.SphereGeometry(0.040, 16, 16),
           new THREE.MeshStandardMaterial({ map: createOrganTexture('#d98276', '#a34d42'), roughness: 0.35 })
         );
-        stomach.scale.set(1.1, 0.5, 0.8);
-        stomach.position.set(0.030, ySurface, zCenter + 0.02);
+        stomach.scale.set(1.05, 0.48, 0.82);
+        stomach.position.set(0.036, ySurface - 0.002, zCenter + 0.015);
         anatomyGroup.add(stomach);
 
         targetOrganMesh = createSingleOrganModel(zoneId);
-        targetOrganMesh.position.set(zoneId === 'abdomen' ? -0.014 : 0, ySurface + 0.008, zCenter - 0.01);
+        // Печень — в правом подреберье (-0.020 по X), почка — справа от позвоночника (-0.032 по X)
+        targetOrganMesh.position.set(zoneId === 'abdomen' ? -0.020 : -0.032, ySurface + 0.008, zCenter - 0.01);
       } else {
         targetOrganMesh = createSingleOrganModel('head');
         targetOrganMesh.position.set(0, ySurface + 0.008, zCenter);
@@ -698,11 +831,11 @@
       levelDynamicGroup = new THREE.Group();
       scene.add(levelDynamicGroup);
 
-      // Точные анатомические координаты для модели Xbot (голова z=-0.58, грудь z=-0.26, живот z=-0.02)
+      // Точные анатомические координаты на модели пациента (голова z=-0.58, грудь z=-0.22, живот z=0.05)
       const isHead = activeOp.zone.id === 'head';
       const isAbdomen = activeOp.zone.id === 'abdomen' || activeOp.zone.id === 'kidney';
-      const zCenter = isHead ? -0.58 : (isAbdomen ? -0.02 : -0.26);
-      const ySurface = isHead ? 1.065 : 1.072;
+      const zCenter = isHead ? -0.58 : (isAbdomen ? 0.05 : -0.22);
+      const ySurface = isHead ? 1.095 : 1.072;
 
       woundGroup = new THREE.Group();
       woundGroup.position.set(0, ySurface, zCenter);
@@ -721,9 +854,9 @@
         const dot = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.005, segLen * 0.65), guideMat);
         dot.position.set(0, 0.006, zOff);
 
-        const openCut = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, segLen * 1.05, 14), muscleWoundMat);
+        const openCut = new THREE.Mesh(new THREE.CylinderGeometry(0.050, 0.050, segLen * 1.05, 14), muscleWoundMat);
         openCut.rotation.x = Math.PI / 2;
-        openCut.scale.set(1.25, 1, 0.25);
+        openCut.scale.set(1.3, 1, 0.25);
         openCut.position.set(0, 0.001, zOff);
         openCut.visible = false;
 
@@ -741,7 +874,7 @@
       if (!isHead && (activeOp.zone.id === 'chest' || activeOp.zone.id === 'lungs')) {
         const boneMat = new THREE.MeshStandardMaterial({ color: 0xf2ece1, roughness: 0.38 });
         [-0.07, 0, 0.07].forEach(rz => {
-          [-0.050, 0.050].forEach(rx => {
+          [-0.054, 0.054].forEach(rx => {
             const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.032, 10), boneMat);
             rib.rotation.z = Math.PI / 2;
             rib.position.set(rx, 0.007, rz);
