@@ -19,7 +19,7 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
     #lvl-badge { font-size: 11px; color: #00ffcc; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; }
-    #task-text { font-size: 14px; font-weight: 700; margin-top: 3px; max-width: 260px; line-height: 1.3; color: #f0f8ff; }
+    #task-text { font-size: 14px; font-weight: 700; margin-top: 3px; max-width: 265px; line-height: 1.3; color: #f0f8ff; }
     #step-counter { font-size: 11px; color: #8faec9; margin-top: 4px; }
     #progress-wrap { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 6px; overflow: hidden; }
     #action-fill { width: 0%; height: 100%; background: #00ffcc; transition: width 0.08s linear; }
@@ -31,10 +31,10 @@
     #blood-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #ff1e42, #ff6b81); transition: width 0.15s linear; }
 
     #gesture-guide {
-      position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%);
-      background: rgba(0, 20, 30, 0.85); border: 1px solid #00ffcc;
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: rgba(0, 20, 30, 0.88); border: 1px solid #00ffcc;
       color: #00ffcc; padding: 6px 16px; border-radius: 20px;
-      font-size: 13px; font-weight: 700; pointer-events: none; z-index: 6;
+      font-size: 12px; font-weight: 700; pointer-events: none; z-index: 6;
       text-align: center; white-space: nowrap; box-shadow: 0 0 15px rgba(0,255,204,0.25);
     }
 
@@ -42,17 +42,15 @@
       position: fixed; bottom: 16px; right: 16px; display: flex; gap: 10px; z-index: 10;
     }
     .btn {
-      padding: 0 18px; height: 52px; border-radius: 26px; border: 2px solid rgba(255,255,255,0.35);
-      background: rgba(15, 28, 44, 0.9); color: #fff; font-weight: 800; font-size: 12px;
-      display: flex; align-items: center; justify-content: center;
+      padding: 0 20px; height: 50px; border-radius: 25px; border: 2px solid #ff4d6d;
+      background: rgba(180, 30, 60, 0.5); color: #fff; font-weight: 800; font-size: 12px;
+      display: none; align-items: center; justify-content: center;
       box-shadow: 0 4px 16px rgba(0,0,0,0.6);
     }
     .btn:active { transform: scale(0.93); }
-    #btn-drop { border-color: #ff4d6d; background: rgba(180, 30, 60, 0.45); display: none; }
-    #btn-cam { border-color: #4da6ff; background: rgba(20, 70, 130, 0.45); }
 
     #btn-menu {
-      position: fixed; bottom: 16px; left: 16px; width: 52px; height: 52px;
+      position: fixed; bottom: 16px; left: 16px; width: 50px; height: 50px;
       border-radius: 14px; border: 1px solid rgba(255,255,255,0.3);
       background: rgba(15, 28, 44, 0.88); color: #fff; font-size: 20px;
       display: flex; align-items: center; justify-content: center; z-index: 10;
@@ -107,13 +105,12 @@
 
   <div id="btn-menu" onclick="openMenu()">☰</div>
   <div id="controls">
-    <div class="btn" id="btn-cam">ВИД: СТОЛ</div>
     <div class="btn" id="btn-drop">ПОЛОЖИТЬ</div>
   </div>
 
   <div id="overlay">
     <h1 id="ov-title">SURGEON 3D: 50 ОПЕРАЦИЙ</h1>
-    <p id="ov-desc">Выбери операцию (1–50). Бери инструменты тапом и проводи пальцем по телу пациента, чтобы резать, прижигать, зашивать и пересаживать органы.</p>
+    <p id="ov-desc">Выбери операцию (1–50). Проводи пальцем по пустому месту, чтобы крутить камеру. Бери инструменты тапом и режь точно по линии.</p>
     <div id="level-grid"></div>
     <button id="start-btn" onclick="startLevel(currentLevel)">ИГРАТЬ ОПЕРАЦИЮ #1</button>
   </div>
@@ -138,8 +135,8 @@
       tasks.push({
         type: 'open',
         tool: zone.toolOpen,
-        text: `Проведи ${zone.openLabel} по линии разреза (${zone.name})`,
-        guide: `Возьми ${zone.toolOpen === 'scalpel' ? 'СКАЛЬПЕЛЬ' : 'ПИЛУ'} и веди пальцем вдоль линии!`
+        text: `Разрежь ${zone.openLabel} вдоль линии (${zone.name})`,
+        guide: `Веди ${zone.toolOpen === 'scalpel' ? 'СКАЛЬПЕЛЕМ' : 'ПИЛОЙ'} вдоль всей пунктирной линии`
       });
 
       if (i % 2 === 0 || difficulty >= 3) {
@@ -149,7 +146,7 @@
           tool: 'laser',
           count: bleedersCount,
           text: `Прижги ЛАЗЕРОМ сосуды (${bleedersCount} шт.)`,
-          guide: `Возьми ЛАЗЕР и зажми палец на красных точках сосудов`
+          guide: `Наведи ЛАЗЕР на красные точки сосудов в ране`
         });
       }
 
@@ -157,14 +154,14 @@
         tasks.push({
           type: 'transplant_remove',
           tool: 'forceps',
-          text: `Удали больной орган (${zone.organ}) ЩИПЦАМИ в лоток слева`,
-          guide: `Возьми ЩИПЦЫ, зажми орган и тащи пальцем в лоток слева`
+          text: `Удали больной орган (${zone.organ}) ЩИПЦАМИ в лоток`,
+          guide: `Зажми орган ЩИПЦАМИ и перетащи в лоток слева`
         });
         tasks.push({
           type: 'transplant_place',
           tool: 'forceps',
           text: `Пересади донорский орган (${zone.organ}) из бокса в рану`,
-          guide: `Зажми новый орган в синем боксе слева и перетащи в рану`
+          guide: `Зажми орган в синем боксе слева и перетащи в рану`
         });
       } else {
         const shards = Math.min(4, 1 + Math.floor(i / 12));
@@ -172,8 +169,8 @@
           type: 'extract',
           tool: 'forceps',
           count: shards,
-          text: `Извлеки ЩИПЦАМИ осколки (${shards} шт.) в лоток слева`,
-          guide: `Возьми ЩИПЦЫ, зажми осколок в ране и тащи в лоток слева`
+          text: `Достань ЩИПЦАМИ осколки (${shards} шт.) в лоток слева`,
+          guide: `Зажми осколок в ране ЩИПЦАМИ и тащи в лоток слева`
         });
       }
 
@@ -182,7 +179,7 @@
           type: 'inject',
           tool: 'syringe',
           text: `Вколи АДРЕНАЛИН шприцем прямо в ${zone.organ}`,
-          guide: `Возьми ШПРИЦ и нажми на орган, чтобы ввести адреналин`
+          guide: `Коснись ШПРИЦЕМ органа в ране`
         });
       }
 
@@ -191,7 +188,7 @@
           type: 'suture',
           tool: 'needle',
           text: `Зашей разрез ХИРУРГИЧЕСКОЙ ИГЛОЙ`,
-          guide: `Возьми ИГЛУ и води пальцем поперек разреза`
+          guide: `Проведи ИГЛОЙ вдоль всего разреза, чтобы наложить швы`
         });
       }
 
@@ -200,7 +197,7 @@
           type: 'defib',
           tool: 'defib',
           text: `Остановка сердца! Разряди ДЕФИБРИЛЛЯТОР!`,
-          guide: `Возьми ДЕФИБРИЛЛЯТОР и прижми к груди пациента`
+          guide: `Прижми ДЕФИБРИЛЛЯТОР к груди пациента`
         });
       }
 
@@ -221,19 +218,18 @@
     let activeOp = null;
     let currentTaskIdx = 0;
     let taskProgress = 0;
-    let gestureProgress = 0;
 
     let heldTool = null;
     let draggedMesh = null;
-    let isTouchingBody = false;
+    let gestureMode = 'none'; // 'camera' | 'tool' | 'drag'
     let lastTouchPos = new THREE.Vector2();
     let pointerNDC = new THREE.Vector2();
 
-    let camMode = 0; // 0 = общий вид, 1 = крупный план раны
-    const camTargets = [
-      { pos: new THREE.Vector3(0.18, 1.78, 0.78), look: new THREE.Vector3(0.08, 1.02, -0.05), label: 'ВИД: ОБЩИЙ' },
-      { pos: new THREE.Vector3(0.0, 1.54, 0.36), look: new THREE.Vector3(0.0, 1.06, -0.05), label: 'ВИД: РАНА' }
-    ];
+    // Параметры свободной орбитальной камеры
+    let camYaw = 0.22;
+    let camPitch = 0.88;
+    let camDist = 1.05;
+    const camLookTarget = new THREE.Vector3(0.05, 1.04, -0.12);
 
     let maxBloodTime = 60;
     let bloodTimeLeft = 60;
@@ -243,7 +239,8 @@
     const toolMeshes = [];
     const pickableTools = [];
     let levelDynamicGroup = null;
-    let woundGroup, skinLeft, skinRight, cutGuideLine, ribsGroup;
+    let woundGroup, ribsGroup;
+    const cutSegments = []; // 8 независимых сегментов разреза!
     let mainOrganMesh, donorOrganMesh, trashTray, donorBox, laserBeam;
     const bloodParticles = [];
 
@@ -256,7 +253,6 @@
     const bloodFill = document.getElementById('blood-fill');
     const gestureGuide = document.getElementById('gesture-guide');
     const btnDrop = document.getElementById('btn-drop');
-    const btnCam = document.getElementById('btn-cam');
 
     function renderLevelGrid() {
       const grid = document.getElementById('level-grid');
@@ -286,11 +282,6 @@
       document.getElementById('overlay').style.display = 'flex';
     }
 
-    btnCam.addEventListener('click', () => {
-      camMode = (camMode + 1) % camTargets.length;
-      btnCam.textContent = camTargets[camMode].label;
-    });
-
     btnDrop.addEventListener('click', () => {
       if (!heldTool) return;
       heldTool.position.copy(heldTool.userData.homePos);
@@ -298,17 +289,17 @@
       heldTool = null;
       draggedMesh = null;
       btnDrop.style.display = 'none';
+      updateHUD();
       updateGuide();
     });
 
     function init3D() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x09131e);
-      scene.fog = new THREE.FogExp2(0x09131e, 0.08);
+      scene.background = new THREE.Color(0x0a1420);
+      scene.fog = new THREE.FogExp2(0x0a1420, 0.065);
 
-      camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.05, 30);
-      camera.position.copy(camTargets[0].pos);
-      camera.lookAt(camTargets[0].look);
+      camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.05, 30);
+      updateCameraOrbit();
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -319,43 +310,43 @@
 
       raycaster = new THREE.Raycaster();
 
-      // Освещение операционной
-      scene.add(new THREE.AmbientLight(0x7ca2c4, 0.65));
-      const mainLamp = new THREE.SpotLight(0xfffcf5, 1.65);
-      mainLamp.position.set(0, 2.7, 0.1);
-      mainLamp.angle = Math.PI / 3.4;
-      mainLamp.penumbra = 0.5;
+      // Студийное освещение операционной с мягкими тенями
+      scene.add(new THREE.HemisphereLight(0xdbeeff, 0x1b2b3a, 0.75));
+      const mainLamp = new THREE.SpotLight(0xfffaf0, 1.45);
+      mainLamp.position.set(0.15, 2.7, 0.25);
+      mainLamp.angle = Math.PI / 3.2;
+      mainLamp.penumbra = 0.55;
       mainLamp.castShadow = true;
       mainLamp.shadow.mapSize.set(1024, 1024);
       scene.add(mainLamp);
 
-      const rimLight = new THREE.DirectionalLight(0x44aaff, 0.45);
-      rimLight.position.set(-2, 1.8, -1);
-      scene.add(rimLight);
+      const fillLight = new THREE.DirectionalLight(0x66b2ff, 0.4);
+      fillLight.position.set(-1.8, 1.5, -1.2);
+      scene.add(fillLight);
 
-      // Пол и хирургические столы
+      // Пол и хирургический стол
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(14, 14),
-        new THREE.MeshStandardMaterial({ color: 0x101c29, roughness: 0.8 })
+        new THREE.MeshStandardMaterial({ color: 0x0f1b26, roughness: 0.85 })
       );
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
       scene.add(floor);
 
       const opTable = new THREE.Mesh(
-        new THREE.BoxGeometry(1.15, 0.08, 2.2),
-        new THREE.MeshStandardMaterial({ color: 0x6c8296, metalness: 0.6, roughness: 0.3 })
+        new THREE.BoxGeometry(1.05, 0.07, 2.25),
+        new THREE.MeshStandardMaterial({ color: 0x5c7285, metalness: 0.6, roughness: 0.3 })
       );
-      opTable.position.set(0, 0.84, 0);
+      opTable.position.set(0, 0.83, 0);
       opTable.receiveShadow = true;
       scene.add(opTable);
 
       // Инструментальный столик справа
       const toolTable = new THREE.Mesh(
-        new THREE.BoxGeometry(0.68, 0.05, 1.15),
+        new THREE.BoxGeometry(0.65, 0.05, 1.15),
         new THREE.MeshStandardMaterial({ color: 0x9fb4c7, metalness: 0.75, roughness: 0.25 })
       );
-      toolTable.position.set(0.84, 0.88, 0.05);
+      toolTable.position.set(0.82, 0.88, 0.02);
       toolTable.receiveShadow = true;
       scene.add(toolTable);
 
@@ -375,10 +366,9 @@
       donorBox.position.set(-0.44, 0.94, -0.22);
       scene.add(donorBox);
 
-      buildRealisticPatient();
+      buildSculptedHuman();
       buildRealisticTools();
 
-      // Луч лазера
       laserBeam = new THREE.Mesh(
         new THREE.CylinderGeometry(0.004, 0.004, 0.35, 8),
         new THREE.MeshBasicMaterial({ color: 0xff1144 })
@@ -387,83 +377,159 @@
       scene.add(laserBeam);
     }
 
-    function buildRealisticPatient() {
-      const patient = new THREE.Group();
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xe2a788, roughness: 0.58, metalness: 0.05 });
-      const sheetMat = new THREE.MeshStandardMaterial({ color: 0x1a7a6e, roughness: 0.85 });
+    function updateCameraOrbit() {
+      const x = camLookTarget.x + camDist * Math.sin(camYaw) * Math.cos(camPitch);
+      const y = camLookTarget.y + camDist * Math.sin(camPitch);
+      const z = camLookTarget.z + camDist * Math.cos(camYaw) * Math.cos(camPitch);
+      camera.position.set(x, y, z);
+      camera.lookAt(camLookTarget);
+    }
 
-      // Округлый анатомический торс (цилиндр + скругленные плечи)
-      const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.20, 0.76, 28), skinMat);
-      chest.rotation.x = Math.PI / 2;
-      chest.scale.set(1.22, 1, 0.58);
-      chest.position.set(0, 0.98, -0.02);
-      chest.castShadow = true;
-      chest.receiveShadow = true;
-      patient.add(chest);
+    // СКУЛЬПТУРНОЕ 3D-ТЕЛО ЧЕЛОВЕКА (LatheGeometry + анатомия)
+    function buildSculptedHuman() {
+      const human = new THREE.Group();
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xdfa283, roughness: 0.56, metalness: 0.04 });
+      const muscleMat = new THREE.MeshStandardMaterial({ color: 0xd69576, roughness: 0.54, metalness: 0.05 });
+      const sheetMat = new THREE.MeshStandardMaterial({ color: 0x16697a, roughness: 0.85 });
 
-      // Плечи
-      [-0.25, 0.25].forEach(x => {
-        const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.12, 20, 20), skinMat);
-        shoulder.position.set(x, 0.99, -0.34);
-        shoulder.scale.set(1, 0.85, 1.1);
-        shoulder.castShadow = true;
-        patient.add(shoulder);
+      // 1. Анатомический торс через LatheGeometry (плавный профиль от таза до ключиц)
+      const torsoProfile = [
+        new THREE.Vector2(0.00, 0.00),
+        new THREE.Vector2(0.18, 0.03), // таз
+        new THREE.Vector2(0.16, 0.18), // талия
+        new THREE.Vector2(0.19, 0.34), // нижние ребра
+        new THREE.Vector2(0.22, 0.52), // широкая грудная клетка
+        new THREE.Vector2(0.17, 0.64), // ключицы
+        new THREE.Vector2(0.085, 0.69), // основание шеи
+        new THREE.Vector2(0.00, 0.70)
+      ];
+      const torsoGeo = new THREE.LatheGeometry(torsoProfile, 32);
+      const torsoMesh = new THREE.Mesh(torsoGeo, skinMat);
+      torsoMesh.rotation.x = -Math.PI / 2;
+      torsoMesh.scale.set(1.18, 1.0, 0.56);
+      torsoMesh.position.set(0, 0.96, 0.34);
+      torsoMesh.castShadow = true;
+      torsoMesh.receiveShadow = true;
+      human.add(torsoMesh);
 
-        // Руки вдоль тела
-        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.055, 0.65, 18), skinMat);
-        arm.rotation.x = Math.PI / 2;
-        arm.position.set(x * 1.18, 0.94, 0.02);
-        arm.castShadow = true;
-        patient.add(arm);
+      // Рельефные грудные мышцы и ключицы
+      [-0.095, 0.095].forEach(px => {
+        const pec = new THREE.Mesh(new THREE.SphereGeometry(0.085, 18, 18), muscleMat);
+        pec.scale.set(1.05, 0.35, 1.15);
+        pec.position.set(px, 1.055, -0.16);
+        human.add(pec);
+
+        const clavicle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.14, 12), skinMat);
+        clavicle.rotation.z = Math.PI / 2;
+        clavicle.rotation.y = px > 0 ? -0.18 : 0.18;
+        clavicle.position.set(px * 1.1, 1.06, -0.30);
+        human.add(clavicle);
       });
 
-      // Хирургическая простыня ниже пояса
-      const lowerSheet = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.85, 24), sheetMat);
-      lowerSheet.rotation.x = Math.PI / 2;
-      lowerSheet.scale.set(1.22, 1, 0.62);
-      lowerSheet.position.set(0, 0.97, 0.65);
-      lowerSheet.receiveShadow = true;
-      patient.add(lowerSheet);
+      // 2. Плечи, бицепсы, предплечья и кисти с пальцами
+      [-1, 1].forEach(side => {
+        const deltoid = new THREE.Mesh(new THREE.SphereGeometry(0.095, 20, 20), muscleMat);
+        deltoid.scale.set(0.95, 0.85, 1.15);
+        deltoid.position.set(side * 0.245, 1.01, -0.26);
+        deltoid.castShadow = true;
+        human.add(deltoid);
 
-      // Шея
-      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.095, 0.16, 20), skinMat);
+        const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.052, 0.28, 16), skinMat);
+        upperArm.rotation.x = Math.PI / 2;
+        upperArm.rotation.z = side * -0.08;
+        upperArm.position.set(side * 0.275, 0.96, -0.10);
+        upperArm.castShadow = true;
+        human.add(upperArm);
+
+        const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.050, 0.036, 0.27, 16), skinMat);
+        forearm.rotation.x = Math.PI / 2;
+        forearm.position.set(side * 0.29, 0.94, 0.16);
+        forearm.castShadow = true;
+        human.add(forearm);
+
+        // Кисть руки и пальцы
+        const palm = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.025, 0.085), skinMat);
+        palm.position.set(side * 0.29, 0.93, 0.33);
+        human.add(palm);
+        for (let f = -1.5; f <= 1.5; f += 1) {
+          const finger = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.005, 0.055, 8), skinMat);
+          finger.rotation.x = Math.PI / 2;
+          finger.position.set(side * 0.29 + f * 0.014, 0.928, 0.39);
+          human.add(finger);
+        }
+      });
+
+      // 3. Ноги под хирургической простыней
+      const sheetDrape = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.23, 0.85, 24), sheetMat);
+      sheetDrape.rotation.x = Math.PI / 2;
+      sheetDrape.scale.set(1.18, 1, 0.58);
+      sheetDrape.position.set(0, 0.96, 0.68);
+      sheetDrape.receiveShadow = true;
+      human.add(sheetDrape);
+
+      // 4. Шея с мышцами
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.088, 0.14, 20), skinMat);
       neck.rotation.x = Math.PI / 2;
-      neck.position.set(0, 1.01, -0.44);
-      patient.add(neck);
+      neck.position.set(0, 1.02, -0.39);
+      human.add(neck);
 
-      // Анатомическая голова с лицом и шапочкой
+      // 5. Детализированная скульптурная голова
       const headGroup = new THREE.Group();
-      headGroup.position.set(0, 1.05, -0.58);
+      headGroup.position.set(0, 1.06, -0.53);
 
-      const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.145, 24, 24), skinMat);
-      cranium.scale.set(0.92, 0.95, 1.12);
+      // Череп + нижняя челюсть
+      const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.125, 28, 28), skinMat);
+      cranium.scale.set(0.88, 0.95, 1.08);
       cranium.castShadow = true;
       headGroup.add(cranium);
 
-      // Нос
-      const nose = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.055, 12), skinMat);
-      nose.position.set(0, 0.14, 0.01);
-      headGroup.add(nose);
+      const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.095, 20, 20), skinMat);
+      jaw.scale.set(0.82, 0.85, 1.15);
+      jaw.position.set(0, 0.02, 0.045);
+      headGroup.add(jaw);
 
-      // Закрытые глаза (веки)
-      const eyeMat = new THREE.MeshStandardMaterial({ color: 0x9c6b54 });
-      [-0.045, 0.045].forEach(ex => {
-        const eye = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.008, 0.012), eyeMat);
-        eye.position.set(ex, 0.125, -0.035);
-        headGroup.add(eye);
+      // Нос с переносицей и кончиком
+      const noseBridge = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.035, 0.055), skinMat);
+      noseBridge.position.set(0, 0.115, 0.01);
+      const noseTip = new THREE.Mesh(new THREE.SphereGeometry(0.016, 12, 12), skinMat);
+      noseTip.position.set(0, 0.128, 0.032);
+      headGroup.add(noseBridge, noseTip);
+
+      // Надбровные дуги, закрытые веки и губы
+      const browMat = new THREE.MeshStandardMaterial({ color: 0x4a3222, roughness: 0.9 });
+      const lidMat = new THREE.MeshStandardMaterial({ color: 0xb87b60, roughness: 0.6 });
+      [-0.042, 0.042].forEach(ex => {
+        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.008, 0.01), browMat);
+        brow.position.set(ex, 0.112, -0.025);
+        const lid = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 12), lidMat);
+        lid.scale.set(1.1, 0.4, 0.7);
+        lid.position.set(ex, 0.105, -0.008);
+        headGroup.add(brow, lid);
+
+        // Уши
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.026, 12, 12), skinMat);
+        ear.scale.set(0.35, 0.7, 1.1);
+        ear.position.set(ex * 2.6, 0.01, 0.01);
+        headGroup.add(ear);
       });
+
+      // Губы
+      const lips = new THREE.Mesh(new THREE.SphereGeometry(0.024, 14, 14), new THREE.MeshStandardMaterial({ color: 0xb56565, roughness: 0.45 }));
+      lips.scale.set(1.35, 0.45, 0.55);
+      lips.position.set(0, 0.095, 0.072);
+      headGroup.add(lips);
 
       // Хирургическая шапочка
       const cap = new THREE.Mesh(
-        new THREE.SphereGeometry(0.15, 20, 20, 0, Math.PI * 2, 0, Math.PI * 0.55),
-        new THREE.MeshStandardMaterial({ color: 0x2b90d9, roughness: 0.7 })
+        new THREE.SphereGeometry(0.132, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.56),
+        new THREE.MeshStandardMaterial({ color: 0x1e88e5, roughness: 0.75 })
       );
-      cap.rotation.x = -Math.PI * 0.65;
+      cap.rotation.x = -Math.PI * 0.68;
       cap.position.set(0, -0.01, -0.02);
       headGroup.add(cap);
 
-      patient.add(headGroup);
-      scene.add(patient);
+      human.add(headGroup);
+      scene.add(human);
     }
 
     function createDetailedTool(id, label, pos, builderFn) {
@@ -471,16 +537,14 @@
       group.position.set(...pos);
       builderFn(group);
 
-      // Невидимый хитбокс для удобного тапа пальцем
       const hitbox = new THREE.Mesh(
-        new THREE.BoxGeometry(0.13, 0.12, 0.34),
+        new THREE.BoxGeometry(0.14, 0.12, 0.34),
         new THREE.MeshBasicMaterial({ visible: false })
       );
       hitbox.userData = { parentTool: group };
       group.add(hitbox);
       pickableTools.push(hitbox);
 
-      // Подсветка нужного инструмента
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(0.07, 0.095, 24),
         new THREE.MeshBasicMaterial({ color: 0x00ffcc, side: THREE.DoubleSide })
@@ -502,12 +566,11 @@
     }
 
     function buildRealisticTools() {
-      const steel = new THREE.MeshStandardMaterial({ color: 0xdce6f0, metalness: 0.9, roughness: 0.15 });
-      const darkSteel = new THREE.MeshStandardMaterial({ color: 0x6b7c8c, metalness: 0.85, roughness: 0.25 });
+      const steel = new THREE.MeshStandardMaterial({ color: 0xe3edf7, metalness: 0.92, roughness: 0.14 });
+      const darkSteel = new THREE.MeshStandardMaterial({ color: 0x5c6d7e, metalness: 0.85, roughness: 0.25 });
 
-      // 1. Скальпель (ручка + острое треугольное лезвие)
-      createDetailedTool('scalpel', 'Скальпель', [0.66, 0.91, -0.32], g => {
-        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.008, 0.18), darkSteel);
+      createDetailedTool('scalpel', 'Скальпель', [0.64, 0.91, -0.32], g => {
+        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.008, 0.18), darkSteel);
         handle.position.z = 0.04;
         const blade = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.075, 4), steel);
         blade.rotation.x = -Math.PI / 2;
@@ -516,8 +579,7 @@
         g.add(handle, blade);
       });
 
-      // 2. Костная пила (рукоятка + зубчатое полотно)
-      createDetailedTool('saw', 'Костная пила', [0.84, 0.91, -0.32], g => {
+      createDetailedTool('saw', 'Костная пила', [0.82, 0.91, -0.32], g => {
         const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.11, 12), new THREE.MeshStandardMaterial({ color: 0x223344 }));
         grip.rotation.x = Math.PI / 2;
         grip.position.z = 0.08;
@@ -526,8 +588,7 @@
         g.add(grip, blade);
       });
 
-      // 3. Хирургические щипцы (две сходящиеся бранши)
-      createDetailedTool('forceps', 'Щипцы', [1.02, 0.91, -0.32], g => {
+      createDetailedTool('forceps', 'Щипцы', [1.00, 0.91, -0.32], g => {
         [-1, 1].forEach(dir => {
           const arm = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.01, 0.24), steel);
           arm.position.set(dir * 0.012, 0, 0);
@@ -536,8 +597,7 @@
         });
       });
 
-      // 4. Лазерный коагулятор
-      createDetailedTool('laser', 'Лазер', [0.66, 0.92, 0.04], g => {
+      createDetailedTool('laser', 'Лазер', [0.64, 0.92, 0.04], g => {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.20, 14), new THREE.MeshStandardMaterial({ color: 0x2b2d42, metalness: 0.5 }));
         body.rotation.x = Math.PI / 2;
         const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.016, 0.05, 12), new THREE.MeshStandardMaterial({ color: 0xff2a55, emissive: 0x660011 }));
@@ -546,8 +606,7 @@
         g.add(body, tip);
       });
 
-      // 5. Шприц с зеленым адреналином
-      createDetailedTool('syringe', 'Шприц', [0.84, 0.92, 0.04], g => {
+      createDetailedTool('syringe', 'Шприц', [0.82, 0.92, 0.04], g => {
         const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.15, 14), new THREE.MeshStandardMaterial({ color: 0x00ff88, transparent: true, opacity: 0.75 }));
         barrel.rotation.x = Math.PI / 2;
         const plunger = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.09, 10), steel);
@@ -559,8 +618,7 @@
         g.add(barrel, plunger, needle);
       });
 
-      // 6. Изогнутая хирургическая игла с синей нитью
-      createDetailedTool('needle', 'Игла и нить', [1.02, 0.92, 0.04], g => {
+      createDetailedTool('needle', 'Игла и нить', [1.00, 0.92, 0.04], g => {
         const hook = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.004, 8, 20, Math.PI * 1.3), steel);
         hook.rotation.x = Math.PI / 2;
         const thread = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.003, 6, 20), new THREE.MeshBasicMaterial({ color: 0x00aaff }));
@@ -569,8 +627,7 @@
         g.add(hook, thread);
       });
 
-      // 7. Дефибриллятор (два утюжка с ручками)
-      createDetailedTool('defib', 'Дефибриллятор', [0.84, 0.93, 0.38], g => {
+      createDetailedTool('defib', 'Дефибриллятор', [0.82, 0.93, 0.38], g => {
         [-0.055, 0.055].forEach(px => {
           const pad = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.025, 0.11), new THREE.MeshStandardMaterial({ color: 0xff9f1c }));
           pad.position.set(px, 0, 0);
@@ -581,49 +638,83 @@
       });
     }
 
+    // ДЕТАЛИЗИРОВАННЫЕ 3D-ОРГАНЫ (не «пробка с бубликом»)
     function createAnatomicalOrgan(zoneId) {
       const group = new THREE.Group();
       if (zoneId === 'chest') {
-        // Сердце: желудочки + аорта
-        const mat = new THREE.MeshStandardMaterial({ color: 0xb81d38, roughness: 0.32, metalness: 0.1 });
-        const body = new THREE.Mesh(new THREE.SphereGeometry(0.065, 20, 20), mat);
-        body.scale.set(0.85, 0.75, 1.2);
-        const aorta = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.015, 10, 16, Math.PI), new THREE.MeshStandardMaterial({ color: 0xd93854, roughness: 0.3 }));
-        aorta.position.set(0, 0.02, -0.055);
-        group.add(body, aorta);
+        // Анатомическое сердце: конусовидный миокард + левый/правый желудочки + дуга аорты + 3 артерии + коронарные сосуды
+        const heartMat = new THREE.MeshStandardMaterial({ color: 0x9e152c, roughness: 0.28, metalness: 0.12 });
+        const atriumMat = new THREE.MeshStandardMaterial({ color: 0xb8253e, roughness: 0.32 });
+        const arteryMat = new THREE.MeshStandardMaterial({ color: 0xd93848, roughness: 0.25 });
+
+        const heartProfile = [
+          new THREE.Vector2(0.00, -0.065), // верхушка сердца (апекс)
+          new THREE.Vector2(0.028, -0.035),
+          new THREE.Vector2(0.052, 0.005),
+          new THREE.Vector2(0.054, 0.038),
+          new THREE.Vector2(0.035, 0.058),
+          new THREE.Vector2(0.00, 0.062)
+        ];
+        const myocardium = new THREE.Mesh(new THREE.LatheGeometry(heartProfile, 24), heartMat);
+        myocardium.rotation.set(Math.PI / 2, 0, -0.35);
+        myocardium.scale.set(1.05, 1.0, 0.78);
+        group.add(myocardium);
+
+        // Предсердия
+        const leftAtrium = new THREE.Mesh(new THREE.SphereGeometry(0.028, 14, 14), atriumMat);
+        leftAtrium.position.set(0.032, 0.015, -0.035);
+        const rightAtrium = new THREE.Mesh(new THREE.SphereGeometry(0.030, 14, 14), atriumMat);
+        rightAtrium.position.set(-0.032, 0.012, -0.032);
+        group.add(leftAtrium, rightAtrium);
+
+        // Дуга аорты и 3 отходящих ствола
+        const aortaArch = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.011, 10, 18, Math.PI * 1.15), arteryMat);
+        aortaArch.position.set(-0.005, 0.022, -0.058);
+        aortaArch.rotation.z = 0.25;
+        group.add(aortaArch);
+
+        [-0.015, 0, 0.015].forEach(bx => {
+          const branch = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.005, 0.028, 8), arteryMat);
+          branch.rotation.x = Math.PI / 2;
+          branch.position.set(bx, 0.022, -0.088);
+          group.add(branch);
+        });
+
+        // Поверхностные коронарные артерии
+        const coronary = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0015, 0.085, 8), new THREE.MeshBasicMaterial({ color: 0xff4d6d }));
+        coronary.rotation.set(Math.PI / 2, 0, -0.4);
+        coronary.position.set(0.008, 0.038, 0.005);
+        group.add(coronary);
+
       } else if (zoneId === 'abdomen') {
-        // Печень: две асимметричные доли
-        const mat = new THREE.MeshStandardMaterial({ color: 0x7d2618, roughness: 0.3 });
-        const rightLobe = new THREE.Mesh(new THREE.SphereGeometry(0.075, 20, 20), mat);
-        rightLobe.scale.set(1.2, 0.65, 0.9);
-        rightLobe.position.x = -0.03;
-        const leftLobe = new THREE.Mesh(new THREE.SphereGeometry(0.055, 18, 18), mat);
-        leftLobe.scale.set(1.1, 0.55, 0.8);
-        leftLobe.position.x = 0.045;
+        const mat = new THREE.MeshStandardMaterial({ color: 0x7a2316, roughness: 0.28 });
+        const rightLobe = new THREE.Mesh(new THREE.SphereGeometry(0.072, 22, 22), mat);
+        rightLobe.scale.set(1.25, 0.55, 0.92);
+        rightLobe.position.set(-0.028, 0, 0);
+        const leftLobe = new THREE.Mesh(new THREE.SphereGeometry(0.052, 18, 18), mat);
+        leftLobe.scale.set(1.15, 0.48, 0.78);
+        leftLobe.position.set(0.044, 0.004, -0.01);
         group.add(rightLobe, leftLobe);
       } else if (zoneId === 'head') {
-        // Мозг: два полушария
-        const mat = new THREE.MeshStandardMaterial({ color: 0xe899a8, roughness: 0.45 });
-        [-0.038, 0.038].forEach(hx => {
-          const hemi = new THREE.Mesh(new THREE.SphereGeometry(0.058, 20, 20), mat);
-          hemi.scale.set(0.75, 0.8, 1.35);
+        const mat = new THREE.MeshStandardMaterial({ color: 0xe694a4, roughness: 0.45 });
+        [-0.036, 0.036].forEach(hx => {
+          const hemi = new THREE.Mesh(new THREE.SphereGeometry(0.055, 22, 22), mat);
+          hemi.scale.set(0.75, 0.75, 1.32);
           hemi.position.x = hx;
           group.add(hemi);
         });
       } else if (zoneId === 'lungs') {
-        // Легкие: две доли
-        const mat = new THREE.MeshStandardMaterial({ color: 0xd46a7e, roughness: 0.5 });
-        [-0.048, 0.048].forEach(lx => {
-          const lung = new THREE.Mesh(new THREE.SphereGeometry(0.06, 18, 18), mat);
-          lung.scale.set(0.72, 0.7, 1.45);
+        const mat = new THREE.MeshStandardMaterial({ color: 0xd16277, roughness: 0.48 });
+        [-0.046, 0.046].forEach(lx => {
+          const lung = new THREE.Mesh(new THREE.SphereGeometry(0.058, 20, 20), mat);
+          lung.scale.set(0.72, 0.68, 1.42);
           lung.position.x = lx;
           group.add(lung);
         });
       } else {
-        // Почка
-        const mat = new THREE.MeshStandardMaterial({ color: 0x6e1423, roughness: 0.28 });
-        const kidney = new THREE.Mesh(new THREE.SphereGeometry(0.062, 20, 20), mat);
-        kidney.scale.set(0.75, 0.65, 1.35);
+        const mat = new THREE.MeshStandardMaterial({ color: 0x6b1220, roughness: 0.28 });
+        const kidney = new THREE.Mesh(new THREE.SphereGeometry(0.058, 22, 22), mat);
+        kidney.scale.set(0.75, 0.62, 1.32);
         group.add(kidney);
       }
       return group;
@@ -640,7 +731,6 @@
       activeOp = OPERATIONS[lvl - 1];
       currentTaskIdx = 0;
       taskProgress = 0;
-      gestureProgress = 0;
       maxBloodTime = activeOp.bleedTime;
       bloodTimeLeft = maxBloodTime;
       isBleeding = false;
@@ -659,48 +749,60 @@
       scene.add(levelDynamicGroup);
 
       const isHead = activeOp.zone.id === 'head';
-      const zCenter = isHead ? -0.58 : -0.02;
-      const ySurface = isHead ? 1.18 : 1.115;
+      const zCenter = isHead ? -0.53 : -0.08;
+      const ySurface = isHead ? 1.175 : 1.088;
 
-      // Операционная полость (темно-красная глубина внутри)
       woundGroup = new THREE.Group();
       woundGroup.position.set(0, ySurface, zCenter);
       levelDynamicGroup.add(woundGroup);
 
+      // Темно-красная полость внутри
+      const totalLen = isHead ? 0.16 : 0.34;
       const cavity = new THREE.Mesh(
-        new THREE.BoxGeometry(0.17, 0.02, isHead ? 0.16 : 0.34),
-        new THREE.MeshStandardMaterial({ color: 0x3b040c, roughness: 0.4 })
+        new THREE.BoxGeometry(0.16, 0.02, totalLen),
+        new THREE.MeshStandardMaterial({ color: 0x38030b, roughness: 0.4 })
       );
-      cavity.position.y = -0.015;
-      cavity.visible = false;
+      cavity.position.y = -0.016;
       woundGroup.add(cavity);
-      woundGroup.userData.cavity = cavity;
 
-      // Две створки кожи, которые разъезжаются при проведении скальпелем
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xd99979, roughness: 0.6 });
-      const flapLen = isHead ? 0.17 : 0.35;
-      skinLeft = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.018, flapLen), skinMat);
-      skinLeft.position.set(-0.044, 0, 0);
-      skinRight = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.018, flapLen), skinMat);
-      skinRight.position.set(0.044, 0, 0);
-      woundGroup.add(skinLeft, skinRight);
+      // 8 НЕЗАВИСИМЫХ СЕГМЕНТОВ РАЗРЕЗА (режутся по одному по мере движения скальпеля)
+      cutSegments.length = 0;
+      const SEG_COUNT = 8;
+      const segLen = totalLen / SEG_COUNT;
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xd69474, roughness: 0.58 });
+      const guideMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
 
-      // Пунктирная линия разреза
-      cutGuideLine = new THREE.Mesh(
-        new THREE.BoxGeometry(0.008, 0.022, flapLen),
-        new THREE.MeshBasicMaterial({ color: 0x00ffcc })
-      );
-      woundGroup.add(cutGuideLine);
+      for (let s = 0; s < SEG_COUNT; s++) {
+        const zOff = -totalLen / 2 + segLen * (s + 0.5);
+        const leftFlap = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.016, segLen * 0.98), skinMat);
+        leftFlap.position.set(-0.042, 0, zOff);
+
+        const rightFlap = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.016, segLen * 0.98), skinMat);
+        rightFlap.position.set(0.042, 0, zOff);
+
+        const dot = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.02, segLen * 0.65), guideMat);
+        dot.position.set(0, 0.002, zOff);
+
+        woundGroup.add(leftFlap, rightFlap, dot);
+        cutSegments.push({
+          zOff,
+          leftFlap,
+          rightFlap,
+          dot,
+          isCut: false,
+          isSutured: false
+        });
+      }
 
       // Белые ребра для грудной клетки
       ribsGroup = new THREE.Group();
       if (!isHead && (activeOp.zone.id === 'chest' || activeOp.zone.id === 'lungs')) {
-        const boneMat = new THREE.MeshStandardMaterial({ color: 0xf0ead6, roughness: 0.4 });
-        [-0.1, 0, 0.1].forEach(rz => {
-          [-0.075, 0.075].forEach(rx => {
-            const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.05, 10), boneMat);
+        const boneMat = new THREE.MeshStandardMaterial({ color: 0xf2ece1, roughness: 0.38 });
+        [-0.095, 0, 0.095].forEach(rz => {
+          [-0.068, 0.068].forEach(rx => {
+            const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.045, 10), boneMat);
             rib.rotation.z = Math.PI / 2;
-            rib.position.set(rx, -0.005, rz);
+            rib.position.set(rx, -0.004, rz);
             ribsGroup.add(rib);
           });
         });
@@ -708,14 +810,13 @@
       ribsGroup.visible = false;
       woundGroup.add(ribsGroup);
 
-      // Анатомический орган внутри раны
+      // Анатомический орган
       mainOrganMesh = createAnatomicalOrgan(activeOp.zone.id);
-      mainOrganMesh.position.set(0, ySurface - 0.01, zCenter);
+      mainOrganMesh.position.set(0, ySurface - 0.006, zCenter);
       mainOrganMesh.visible = false;
       mainOrganMesh.userData = { type: 'organ', removed: false };
       levelDynamicGroup.add(mainOrganMesh);
 
-      // Донорский орган в крио-боксе (если операция по пересадке)
       if (activeOp.tasks.some(t => t.type === 'transplant_place')) {
         donorOrganMesh = createAnatomicalOrgan(activeOp.zone.id);
         donorOrganMesh.position.set(-0.44, 1.03, -0.22);
@@ -725,7 +826,6 @@
         donorOrganMesh = null;
       }
 
-      // Кровоточащие сосуды
       const cauterizeTask = activeOp.tasks.find(t => t.type === 'cauterize');
       if (cauterizeTask) {
         for (let k = 0; k < cauterizeTask.count; k++) {
@@ -733,23 +833,22 @@
             new THREE.SphereGeometry(0.016, 12, 12),
             new THREE.MeshStandardMaterial({ color: 0xff0022, emissive: 0xcc0000 })
           );
-          bleeder.position.set((k - 1) * 0.045, ySurface + 0.005, zCenter + (k % 2 === 0 ? 0.07 : -0.07));
+          bleeder.position.set((k - 1) * 0.042, ySurface + 0.006, zCenter + (k % 2 === 0 ? 0.065 : -0.065));
           bleeder.visible = false;
           bleeder.userData = { type: 'bleeder', sealed: false };
           levelDynamicGroup.add(bleeder);
         }
       }
 
-      // Металлические осколки
       const extractTask = activeOp.tasks.find(t => t.type === 'extract');
       if (extractTask) {
         for (let s = 0; s < extractTask.count; s++) {
           const shard = new THREE.Mesh(
-            new THREE.OctahedronGeometry(0.026, 0),
-            new THREE.MeshStandardMaterial({ color: 0xcce6ff, metalness: 0.95, roughness: 0.1 })
+            new THREE.OctahedronGeometry(0.028, 0),
+            new THREE.MeshStandardMaterial({ color: 0xd9eeff, metalness: 0.95, roughness: 0.1 })
           );
-          shard.scale.set(0.6, 0.5, 1.5);
-          shard.position.set((s % 2 === 0 ? 0.032 : -0.032), ySurface + 0.01, zCenter - 0.08 + s * 0.06);
+          shard.scale.set(0.65, 0.55, 1.5);
+          shard.position.set((s % 2 === 0 ? 0.032 : -0.032), ySurface + 0.014, zCenter - 0.07 + s * 0.055);
           shard.rotation.set(0.5, s * 1.1, 0.3);
           shard.visible = false;
           shard.userData = { type: 'shard', removed: false };
@@ -764,14 +863,13 @@
       animate();
     }
 
-    function updateHUD() {
+    function updateHUD(pct = 0) {
       const task = activeOp.tasks[currentTaskIdx];
       lvlBadge.textContent = activeOp.title;
       taskText.textContent = task ? task.text : 'Операция завершена!';
       stepCounter.textContent = `Этап ${Math.min(currentTaskIdx + 1, activeOp.tasks.length)} из ${activeOp.tasks.length}`;
-      actionFill.style.width = Math.round(gestureProgress * 100) + '%';
+      actionFill.style.width = Math.round(pct * 100) + '%';
 
-      // Подсвечиваем нужный для этапа инструмент на столе
       toolMeshes.forEach(t => {
         const needed = task && !heldTool && t.userData.toolId === task.tool;
         t.userData.highlightRing.visible = !!needed;
@@ -783,11 +881,11 @@
       const task = activeOp.tasks[currentTaskIdx];
       if (!task) return;
       if (!heldTool) {
-        gestureGuide.textContent = `Нажми на подсвеченный инструмент на столе справа`;
+        gestureGuide.textContent = `Тапни по подсвеченному инструменту (или крути камеру)`;
         gestureGuide.style.borderColor = '#00ffcc';
         gestureGuide.style.color = '#00ffcc';
       } else if (heldTool.userData.toolId !== task.tool) {
-        gestureGuide.textContent = `Не тот инструмент! Нажми ПОЛОЖИТЬ и возьми другой`;
+        gestureGuide.textContent = `Не тот инструмент! Нажми ПОЛОЖИТЬ и возьми нужный`;
         gestureGuide.style.borderColor = '#ff4d6d';
         gestureGuide.style.color = '#ff4d6d';
       } else {
@@ -799,7 +897,6 @@
 
     function advanceTask() {
       taskProgress = 0;
-      gestureProgress = 0;
       currentTaskIdx++;
       if (currentTaskIdx >= activeOp.tasks.length) {
         completeOperation();
@@ -807,7 +904,7 @@
         const nextTask = activeOp.tasks[currentTaskIdx];
         if (nextTask.type === 'inject') bpm = 32;
         if (nextTask.type === 'defib') bpm = 0;
-        updateHUD();
+        updateHUD(0);
         updateGuide();
       }
     }
@@ -841,7 +938,7 @@
       document.getElementById('overlay').style.display = 'flex';
     }
 
-    function getPointerWorldOnTable(clientX, clientY, heightY = 1.12) {
+    function getPointerWorldOnTable(clientX, clientY, heightY = 1.10) {
       pointerNDC.x = (clientX / window.innerWidth) * 2 - 1;
       pointerNDC.y = -(clientY / window.innerHeight) * 2 + 1;
       raycaster.setFromCamera(pointerNDC, camera);
@@ -853,19 +950,19 @@
 
     function spawnBloodDrop(pos) {
       const drop = new THREE.Mesh(
-        new THREE.SphereGeometry(0.008, 6, 6),
+        new THREE.SphereGeometry(0.007, 6, 6),
         new THREE.MeshBasicMaterial({ color: 0xcc0018 })
       );
       drop.position.copy(pos);
       drop.userData = {
-        vel: new THREE.Vector3((Math.random() - 0.5) * 0.4, 0.35 + Math.random() * 0.3, (Math.random() - 0.5) * 0.4),
-        life: 0.6
+        vel: new THREE.Vector3((Math.random() - 0.5) * 0.35, 0.3 + Math.random() * 0.25, (Math.random() - 0.5) * 0.35),
+        life: 0.55
       };
       scene.add(drop);
       bloodParticles.push(drop);
     }
 
-    // СЕНСОРНОЕ УПРАВЛЕНИЕ: ТАПЫ И СВАЙПЫ ПАЛЬЦЕМ ПО ТЕЛУ
+    // УМНОЕ УПРАВЛЕНИЕ: СВОБОДНАЯ КАМЕРА + ТОЧНАЯ РЕЗКА ПО СЕГМЕНТАМ + ПЕРЕТАСКИВАНИЕ
     window.addEventListener('touchstart', e => {
       if (!isPlaying || e.target.closest('#overlay') || e.target.closest('#controls') || e.target.id === 'btn-menu') return;
       const t = e.touches[0];
@@ -875,84 +972,109 @@
       pointerNDC.y = -(t.clientY / window.innerHeight) * 2 + 1;
       raycaster.setFromCamera(pointerNDC, camera);
 
-      // 1. Проверка тапа по инструменту на столе
+      // 1. Взять инструмент со стола тапом
       const toolHits = raycaster.intersectObjects(pickableTools);
       if (toolHits.length > 0) {
         heldTool = toolHits[0].object.userData.parentTool;
         btnDrop.style.display = 'flex';
+        gestureMode = 'none';
         vibrate(35);
         updateHUD();
         updateGuide();
         return;
       }
 
-      if (!heldTool || !activeOp) return;
+      if (!heldTool || !activeOp) {
+        gestureMode = 'camera';
+        return;
+      }
+
       const task = activeOp.tasks[currentTaskIdx];
       const toolId = heldTool.userData.toolId;
+      const worldPt = getPointerWorldOnTable(t.clientX, t.clientY, 1.10);
 
-      // 2. Захват осколка или органа щипцами для перетаскивания
-      if (toolId === 'forceps') {
-        const targets = levelDynamicGroup.children.filter(c => c.visible && (c.userData.type === 'shard' || c.userData.type === 'organ' || c.userData.type === 'donor_organ'));
-        const hits = raycaster.intersectObjects(targets, true);
-        if (hits.length > 0) {
-          let obj = hits[0].object;
-          while (obj.parent && obj.parent !== levelDynamicGroup) obj = obj.parent;
-          if ((task.type === 'extract' && obj.userData.type === 'shard' && !obj.userData.removed) ||
-              (task.type === 'transplant_remove' && obj.userData.type === 'organ' && !obj.userData.removed) ||
-              (task.type === 'transplant_place' && obj.userData.type === 'donor_organ' && !obj.userData.installed)) {
-            draggedMesh = obj;
-            vibrate(50);
-            return;
+      // 2. Захват осколка или органа щипцами (удобный поиск по дистанции)
+      if (toolId === 'forceps' && worldPt) {
+        let closestObj = null;
+        let minDist = 0.16;
+        levelDynamicGroup.children.forEach(c => {
+          if (!c.visible) return;
+          if ((task.type === 'extract' && c.userData.type === 'shard' && !c.userData.removed) ||
+              (task.type === 'transplant_remove' && c.userData.type === 'organ' && !c.userData.removed) ||
+              (task.type === 'transplant_place' && c.userData.type === 'donor_organ' && !c.userData.installed)) {
+            const d = worldPt.distanceTo(c.position);
+            if (d < minDist) {
+              minDist = d;
+              closestObj = c;
+            }
           }
+        });
+        if (closestObj) {
+          draggedMesh = closestObj;
+          gestureMode = 'drag';
+          vibrate(55);
+          return;
         }
       }
 
-      isTouchingBody = true;
-      processGestureStep(t.clientX, t.clientY, 0.04);
+      // 3. Если палец попал по телу/ране пациента — работаем инструментом, иначе крутим камеру!
+      if (worldPt && worldPt.distanceTo(woundGroup.position) < 0.32) {
+        gestureMode = 'tool';
+        processToolAtPoint(worldPt);
+      } else {
+        gestureMode = 'camera';
+      }
     });
 
     window.addEventListener('touchmove', e => {
       if (!isPlaying || !activeOp || e.target.closest('#overlay')) return;
       const t = e.touches[0];
-      const moveDist = Math.hypot(t.clientX - lastTouchPos.x, t.clientY - lastTouchPos.y);
+      const dx = t.clientX - lastTouchPos.x;
+      const dy = t.clientY - lastTouchPos.y;
       lastTouchPos.set(t.clientX, t.clientY);
 
-      // Перемещение инструмента в 3D за пальцем игрока
-      if (heldTool) {
-        const worldPt = getPointerWorldOnTable(t.clientX, t.clientY, 1.18);
-        if (worldPt) {
-          heldTool.position.lerp(worldPt, 0.65);
-          heldTool.rotation.set(0.35, 0, -0.25);
-        }
-      }
-
-      // Перетаскивание осколка или органа щипцами в лоток / в рану
-      if (draggedMesh) {
-        const dragPt = getPointerWorldOnTable(t.clientX, t.clientY, 1.14);
-        if (dragPt) draggedMesh.position.copy(dragPt);
+      // Свободное вращение 3D-камеры вокруг стола
+      if (gestureMode === 'camera') {
+        camYaw -= dx * 0.0065;
+        camPitch = Math.max(0.28, Math.min(1.42, camPitch + dy * 0.0065));
+        updateCameraOrbit();
         return;
       }
 
-      if (isTouchingBody && heldTool) {
-        processGestureStep(t.clientX, t.clientY, moveDist * 0.0045);
+      // Перетаскивание осколка/органа щипцами
+      if (gestureMode === 'drag' && draggedMesh && heldTool) {
+        const dragPt = getPointerWorldOnTable(t.clientX, t.clientY, 1.13);
+        if (dragPt) {
+          draggedMesh.position.copy(dragPt);
+          heldTool.position.set(dragPt.x + 0.03, dragPt.y + 0.06, dragPt.z + 0.08);
+          heldTool.rotation.set(0.45, 0, -0.2);
+        }
+        return;
+      }
+
+      // Работа инструментом точно в точке касания пальца
+      if (gestureMode === 'tool' && heldTool) {
+        const worldPt = getPointerWorldOnTable(t.clientX, t.clientY, 1.11);
+        if (worldPt) {
+          heldTool.position.set(worldPt.x + 0.02, worldPt.y + 0.06, worldPt.z + 0.06);
+          heldTool.rotation.set(0.4, 0, -0.25);
+          processToolAtPoint(worldPt);
+        }
       }
     });
 
     window.addEventListener('touchend', () => {
-      isTouchingBody = false;
       laserBeam.visible = false;
 
-      if (draggedMesh && activeOp) {
+      if (gestureMode === 'drag' && draggedMesh && activeOp) {
         const task = activeOp.tasks[currentTaskIdx];
-        // Проверка сброса в лоток слева
-        if (draggedMesh.position.distanceTo(trashTray.position) < 0.26) {
+        if (draggedMesh.position.distanceTo(trashTray.position) < 0.28) {
           if (task.type === 'extract' && draggedMesh.userData.type === 'shard') {
             draggedMesh.userData.removed = true;
             draggedMesh.position.set(trashTray.position.x + (Math.random() - 0.5) * 0.1, 0.95, trashTray.position.z + (Math.random() - 0.5) * 0.1);
             taskProgress++;
-            gestureProgress = taskProgress / task.count;
             vibrate(80);
-            updateHUD();
+            updateHUD(taskProgress / task.count);
             if (taskProgress >= task.count) advanceTask();
           } else if (task.type === 'transplant_remove' && draggedMesh.userData.type === 'organ') {
             draggedMesh.userData.removed = true;
@@ -961,63 +1083,67 @@
             advanceTask();
           }
         }
-        // Проверка установки донорского органа в рану
         if (task.type === 'transplant_place' && draggedMesh.userData.type === 'donor_organ') {
-          if (draggedMesh.position.distanceTo(woundGroup.position) < 0.25) {
+          if (draggedMesh.position.distanceTo(woundGroup.position) < 0.26) {
             draggedMesh.userData.installed = true;
-            draggedMesh.position.set(woundGroup.position.x, woundGroup.position.y - 0.01, woundGroup.position.z);
+            draggedMesh.position.set(woundGroup.position.x, woundGroup.position.y - 0.006, woundGroup.position.z);
             vibrate(110);
             advanceTask();
           }
         }
-        draggedMesh = null;
       }
+
+      draggedMesh = null;
+      gestureMode = 'none';
     });
 
-    function processGestureStep(clientX, clientY, deltaAmount) {
+    function processToolAtPoint(worldPt) {
       const task = activeOp.tasks[currentTaskIdx];
       if (!task || !heldTool || heldTool.userData.toolId !== task.tool) return;
 
-      const worldPt = getPointerWorldOnTable(clientX, clientY, 1.12);
-      if (!worldPt) return;
-
-      // 1. РАЗРЕЗ СКАЛЬПЕЛЕМ / ПИЛОЙ ПРОВОДКОЙ ПАЛЬЦА
+      // 1. ПОШАГОВАЯ РЕЗКА ПО СЕГМЕНТАМ: открывается только тот кусок, где ты провел лезвием!
       if (task.type === 'open') {
-        if (worldPt.distanceTo(woundGroup.position) < 0.24) {
-          gestureProgress = Math.min(1, gestureProgress + deltaAmount);
-          skinLeft.position.x = -0.044 - gestureProgress * 0.055;
-          skinRight.position.x = 0.044 + gestureProgress * 0.055;
-          woundGroup.userData.cavity.visible = true;
-          if (Math.random() < 0.45) spawnBloodDrop(worldPt);
-          updateHUD();
-
-          if (gestureProgress >= 1) {
-            cutGuideLine.visible = false;
-            ribsGroup.visible = true;
-            isBleeding = true;
-            levelDynamicGroup.children.forEach(c => {
-              if (c !== woundGroup && c.userData.type !== 'donor_organ') c.visible = true;
-            });
-            vibrate(140);
-            advanceTask();
+        let cutCount = 0;
+        cutSegments.forEach(seg => {
+          const segWorldZ = woundGroup.position.z + seg.zOff;
+          const d = Math.hypot(worldPt.x - woundGroup.position.x, worldPt.z - segWorldZ);
+          if (!seg.isCut && d < 0.052) {
+            seg.isCut = true;
+            seg.leftFlap.position.x = -0.095;
+            seg.rightFlap.position.x = 0.095;
+            seg.dot.visible = false;
+            spawnBloodDrop(new THREE.Vector3(woundGroup.position.x, woundGroup.position.y + 0.01, segWorldZ));
+            vibrate(25);
           }
+          if (seg.isCut) cutCount++;
+        });
+
+        updateHUD(cutCount / cutSegments.length);
+
+        if (cutCount === cutSegments.length) {
+          ribsGroup.visible = true;
+          isBleeding = true;
+          levelDynamicGroup.children.forEach(c => {
+            if (c !== woundGroup && c.userData.type !== 'donor_organ') c.visible = true;
+          });
+          vibrate(130);
+          advanceTask();
         }
       }
 
       // 2. ПРИЖИГАНИЕ ЛАЗЕРОМ
       if (task.type === 'cauterize') {
         laserBeam.visible = true;
-        laserBeam.position.copy(heldTool.position).add(new THREE.Vector3(0, -0.14, -0.06));
+        laserBeam.position.copy(heldTool.position).add(new THREE.Vector3(0, -0.14, -0.05));
         levelDynamicGroup.children.forEach(c => {
-          if (c.userData.type === 'bleeder' && !c.userData.sealed && worldPt.distanceTo(c.position) < 0.14) {
+          if (c.userData.type === 'bleeder' && !c.userData.sealed && worldPt.distanceTo(c.position) < 0.13) {
             c.userData.sealed = true;
             c.material.color.setHex(0x222222);
             c.material.emissive.setHex(0x000000);
             bloodTimeLeft = Math.min(maxBloodTime, bloodTimeLeft + 4);
             taskProgress++;
-            gestureProgress = taskProgress / task.count;
             vibrate(90);
-            updateHUD();
+            updateHUD(taskProgress / task.count);
             if (taskProgress >= task.count) {
               laserBeam.visible = false;
               advanceTask();
@@ -1026,48 +1152,48 @@
         });
       }
 
-      // 3. УКОЛ АДРЕНАЛИНА ШПРИЦЕМ
+      // 3. УКОЛ АДРЕНАЛИНА
       if (task.type === 'inject') {
-        if (worldPt.distanceTo(woundGroup.position) < 0.22) {
-          gestureProgress = Math.min(1, gestureProgress + 0.35);
-          updateHUD();
-          if (gestureProgress >= 1) {
-            bpm = 84;
-            vibrate(120);
-            advanceTask();
-          }
+        if (worldPt.distanceTo(woundGroup.position) < 0.16) {
+          bpm = 84;
+          vibrate(120);
+          advanceTask();
         }
       }
 
-      // 4. ЗАШИВАНИЕ ИГЛОЙ ПРОВОДКОЙ ПАЛЬЦА
+      // 4. ПОШАГОВОЕ ЗАШИВАНИЕ ПО СЕГМЕНТАМ
       if (task.type === 'suture') {
-        if (worldPt.distanceTo(woundGroup.position) < 0.24) {
-          gestureProgress = Math.min(1, gestureProgress + deltaAmount * 1.1);
-          skinLeft.position.x = -0.099 + gestureProgress * 0.052;
-          skinRight.position.x = 0.099 - gestureProgress * 0.052;
-          updateHUD();
-
-          // Добавляем визуальный синий стежок
-          if (Math.random() < 0.35) {
+        let suturedCount = 0;
+        cutSegments.forEach(seg => {
+          const segWorldZ = woundGroup.position.z + seg.zOff;
+          const d = Math.hypot(worldPt.x - woundGroup.position.x, worldPt.z - segWorldZ);
+          if (!seg.isSutured && d < 0.055) {
+            seg.isSutured = true;
+            seg.leftFlap.position.x = -0.044;
+            seg.rightFlap.position.x = 0.044;
             const stitch = new THREE.Mesh(
-              new THREE.BoxGeometry(0.055, 0.006, 0.006),
+              new THREE.BoxGeometry(0.052, 0.006, 0.006),
               new THREE.MeshBasicMaterial({ color: 0x00aaff })
             );
-            stitch.position.set(0, 0.012, (gestureProgress - 0.5) * 0.26);
+            stitch.position.set(0, 0.012, seg.zOff);
             woundGroup.add(stitch);
+            vibrate(25);
           }
+          if (seg.isSutured) suturedCount++;
+        });
 
-          if (gestureProgress >= 1) {
-            isBleeding = false;
-            vibrate(120);
-            advanceTask();
-          }
+        updateHUD(suturedCount / cutSegments.length);
+
+        if (suturedCount === cutSegments.length) {
+          isBleeding = false;
+          vibrate(120);
+          advanceTask();
         }
       }
 
       // 5. ДЕФИБРИЛЛЯТОР
       if (task.type === 'defib') {
-        if (worldPt.distanceTo(woundGroup.position) < 0.25) {
+        if (worldPt.distanceTo(woundGroup.position) < 0.22) {
           bpm = 82;
           vibrate([100, 60, 180]);
           advanceTask();
@@ -1088,19 +1214,12 @@
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      // Плавный переход камеры
-      const targetCam = camTargets[camMode];
-      camera.position.lerp(targetCam.pos, 0.12);
-      camera.lookAt(targetCam.look);
-
-      // Пульсация сердца / органа
       const organ = (donorOrganMesh && donorOrganMesh.userData.installed) ? donorOrganMesh : mainOrganMesh;
       if (organ && organ.visible && !organ.userData.removed && bpm > 0) {
-        const s = 1 + Math.sin(now * 0.013 * (bpm / 75)) * 0.14;
+        const s = 1 + Math.sin(now * 0.013 * (bpm / 75)) * 0.13;
         organ.scale.set(s, s, s);
       }
 
-      // Анимация капель крови
       for (let i = bloodParticles.length - 1; i >= 0; i--) {
         const p = bloodParticles[i];
         p.userData.vel.y -= 4.5 * dt;
