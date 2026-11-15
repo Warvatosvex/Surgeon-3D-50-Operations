@@ -16,8 +16,7 @@ jobs:
         run: |
           curl -L https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js -o www/three.min.js
           curl -L https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js -o www/GLTFLoader.js
-          curl -L https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/models/gltf/LeePerrySmith/LeePerrySmith.glb -o www/head.glb
-          curl -L https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/models/gltf/Soldier.glb -o www/human.glb
+          curl -L https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/models/gltf/Xbot.glb -o www/human.glb
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
