@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Surgeon 3D: 50 Operations</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    body { overflow: hidden; background: #09111a; font-family: 'Segoe UI', Roboto, sans-serif; touch-action: none; color: #fff; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+
+    #crosshair {
+      position: fixed; top: 50%; left: 50%; width: 14px; height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.85); border-radius: 50%;
+      transform: translate(-50%, -50%); pointer-events: none; transition: 0.12s;
+      box-shadow: 0 0 8px rgba(0, 255, 200, 0.4);
+    }
+    #crosshair.active { width: 26px; height: 26px; border-color: #00ffcc; background: rgba(0, 255, 204, 0.25); }
+
+    #hud {
+      position: fixed; top: 10px; left: 10px; right: 10px;
+      display: flex; justify-content: space-between; gap: 8px; pointer-events: none; z-index: 5;
+    }
+    .panel {
+      background: rgba(10, 18, 28, 0.86); backdrop-filter: blur(6px);
+      border: 1px solid rgba(0, 255, 204, 0.3); border-radius: 12px; padding: 8px 12px;
+    }
+    #lvl-badge { font-size: 11px; color: #00ffcc; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    #task-text { font-size: 14px; font-weight: 600; margin-top: 2px; max-width: 230px; line-height: 1.25; }
+    #step-counter { font-size: 11px; color: #8faec9; margin-top: 4px; }
+
+    #vitals { text-align: right; min-width: 125px; }
+    #bpm { font-size: 20px; font-weight: 800; color: #00ff66; }
+    #blood-timer { font-size: 13px; font-weight: 700; color: #ff4d6d; margin-top: 2px; }
+    #blood-bar { width: 100%; height: 6px; background: #2b0910; border-radius: 3px; margin-top: 4px; overflow: hidden; }
+    #blood-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #ff1e42, #ff6b81); transition: width 0.15s linear; }
+
+    #hint {
+      position: fixed; top: 55%; left: 50%; transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.78); border: 1px solid rgba(0,255,204,0.4);
+      color: #00ffcc; padding: 5px 14px; border-radius: 20px;
+      font-size: 13px; font-weight: 600; pointer-events: none; opacity: 0; transition: 0.15s; z-index: 5;
+    }
+
+    #controls {
+      position: fixed; bottom: 18px; right: 18px; display: flex; gap: 12px; z-index: 10;
+    }
+    .btn {
+      width: 68px; height: 68px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(15, 28, 44, 0.88); color: #fff; font-weight: 700; font-size: 11px;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6); transition: transform 0.1s;
+    }
+    .btn:active { transform: scale(0.9); }
+    #btn-action { border-color: #00ffcc; background: rgba(0, 170, 130, 0.35); }
+    #btn-drop { border-color: #ff4d6d; background: rgba(180, 30, 60, 0.35); display: none; }
+    #btn-menu {
+      position: fixed; bottom: 18px; left: 18px; width: 46px; height: 46px;
+      border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(15, 28, 44, 0.8); color: #fff; font-size: 18px;
+      display: flex; align-items: center; justify-content: center; z-index: 10;
+    }
+
+    #overlay {
+      position: fixed; inset: 0; background: rgba(7, 13, 22, 0.95);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px; z-index: 20; overflow-y: auto;
+    }
+    #overlay h1 { font-size: 28px; color: #00ffcc; margin-bottom: 6px; text-align: center; }
+    #ov-desc { color: #b0c4de; max-width: 380px; text-align: center; font-size: 14px; line-height: 1.45; margin-bottom: 16px; }
+
+    #level-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+      max-width: 360px; width: 100%; max-height: 46vh; overflow-y: auto;
+      padding: 8px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 18px;
+    }
+    .lvl-btn {
+      padding: 10px 0; border-radius: 8px; border: 1px solid rgba(0, 255, 204, 0.3);
+      background: rgba(18, 34, 52, 0.9); color: #fff; font-weight: 700; font-size: 14px;
+    }
+    .lvl-btn.done { background: rgba(0, 200, 120, 0.25); border-color: #00ff88; color: #00ff88; }
+    .lvl-btn.current { border: 2px solid #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.4); }
+
+    #start-btn {
+      background: linear-gradient(135deg, #00ffcc, #0088ff); color: #04101a;
+      border: none; padding: 14px 36px; font-size: 17px; font-weight: 800; border-radius: 30px;
+      box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="hud">
+    <div class="panel">
+      <div id="lvl-badge">ОПЕРАЦИЯ #1</div>
+      <div id="task-text">Загрузка...</div>
+      <div id="step-counter">Этап 1 из 3</div>
+    </div>
+    <div class="panel" id="vitals">
+      <div id="bpm">76 BPM</div>
+      <div id="blood-timer">Кровь: 60.0 сек</div>
+      <div id="blood-bar"><div id="blood-fill"></div></div>
+    </div>
+  </div>
+
+  <div id="crosshair"></div>
+  <div id="hint">Взять инструмент</div>
+
+  <div id="btn-menu" onclick="openMenu()">☰</div>
+  <div id="controls">
+    <div class="btn" id="btn-drop">БРОСИТЬ</div>
+    <div class="btn" id="btn-action">ДЕЙСТВИЕ</div>
+  </div>
+
+  <div id="overlay">
+    <h1 id="ov-title">SURGEON 3D: 50 ОПЕРАЦИЙ</h1>
+    <p id="ov-desc">Выбери операцию (1–50). Чем выше уровень, тем сложнее патология, больше этапов и меньше времени до полной потери крови.</p>
+    <div id="level-grid"></div>
+    <button id="start-btn" onclick="startLevel(currentLevel)">ИГРАТЬ ОПЕРАЦИЮ #1</button>
+  </div>
+
+  <script src="three.min.js"></script>
+  <script>
+    const OPERATIONS = [];
+    const ZONES = [
+      { id: 'chest', name: 'Грудная клетка', organ: 'Сердце', organColor: 0xc91838, toolOpen: 'scalpel', openLabel: 'скальпелем' },
+      { id: 'abdomen', name: 'Брюшная полость', organ: 'Печень', organColor: 0x8c2d19, toolOpen: 'scalpel', openLabel: 'скальпелем' },
+      { id: 'head', name: 'Черепная коробка', organ: 'Мозг', organColor: 0xe699a6, toolOpen: 'saw', openLabel: 'костной пилой' },
+      { id: 'lungs', name: 'Левое легкое', organ: 'Легкое', organColor: 0xd9667a, toolOpen: 'saw', openLabel: 'костной пилой' },
+      { id: 'kidney', name: 'Почечная зона', organ: 'Почка', organColor: 0x7a1c24, toolOpen: 'scalpel', openLabel: 'скальпелем' }
+    ];
+
+    for (let i = 1; i <= 50; i++) {
+      const zone = ZONES[(i - 1) % ZONES.length];
+      const difficulty = Math.ceil(i / 10);
+      const bleedTime = Math.max(22, Math.round(75 - i * 0.95));
+      const tasks = [];
+
+      tasks.push({
+        type: 'open',
+        tool: zone.toolOpen,
+        text: `Вскрой зону (${zone.name}) ${zone.openLabel}`
+      });
+
+      if (i % 2 === 0 || difficulty >= 3) {
+        const bleedersCount = Math.min(3, Math.floor(difficulty / 2) + 1);
+        tasks.push({
+          type: 'cauterize',
+          tool: 'laser',
+          count: bleedersCount,
+          text: `Прижги ЛАЗЕРОМ кровоточащие сосуды (${bleedersCount} шт.)`
+        });
+      }
+
+      if (i % 3 === 0) {
+        tasks.push({
+          type: 'transplant_remove',
+          tool: 'forceps',
+          text: `Удали пораженный орган (${zone.organ}) ЩИПЦАМИ в лоток слева`
+        });
+        tasks.push({
+          type: 'transplant_place',
+          tool: 'forceps',
+          text: `Возьми донорский орган (${zone.organ}) из бокса и установи пациенту`
+        });
+      } else {
+        const shards = Math.min(5, 1 + Math.floor(i / 11));
+        tasks.push({
+          type: 'extract',
+          tool: 'forceps',
+          count: shards,
+          text: `Извлеки ЩИПЦАМИ инородные тела (${shards} шт.) в лоток слева`
+        });
+      }
+
+      if (i >= 6 && i % 2 === 1) {
+        tasks.push({
+          type: 'inject',
+          tool: 'syringe',
+          text: `Вколи АДРЕНАЛИН шприцем прямо в ${zone.organ}`
+        });
+      }
+
+      if (i >= 4) {
+        tasks.push({
+          type: 'suture',
+          tool: 'needle',
+          text: `Зашей разрез ХИРУРГИЧЕСКОЙ ИГЛОЙ`
+        });
+      }
+
+      if (i % 4 === 0 || i >= 45) {
+        tasks.push({
+          type: 'defib',
+          tool: 'defib',
+          text: `Остановка сердца! Разряди ДЕФИБРИЛЛЯТОР в грудь!`
+        });
+      }
+
+      OPERATIONS.push({
+        level: i,
+        title: `ОПЕРАЦИЯ #${i}: ${zone.name}`,
+        zone,
+        bleedTime,
+        tasks
+      });
+    }
+
+    let scene, camera, renderer, raycaster;
+    let yaw = 0, pitch = -0.58;
+    let isPlaying = false;
+    let currentLevel = parseInt(localStorage.getItem('surg_lvl') || '1', 10);
+    let completedLevels = JSON.parse(localStorage.getItem('surg_done') || '[]');
+
+    let activeOp = null;
+    let currentTaskIdx = 0;
+    let taskProgress = 0;
+
+    let heldItem = null;
+    let grabbedObject = null;
+    let maxBloodTime = 60;
+    let bloodTimeLeft = 60;
+    let isBleeding = false;
+    let bpm = 76;
+
+    const physicsObjects = [];
+    const interactables = [];
+    let levelDynamicGroup = null;
+    let incisionMesh, mainOrganMesh, donorOrganMesh, trashTray, donorBox;
+
+    const crosshair = document.getElementById('crosshair');
+    const hintEl = document.getElementById('hint');
+    const lvlBadge = document.getElementById('lvl-badge');
+    const taskText = document.getElementById('task-text');
+    const stepCounter = document.getElementById('step-counter');
+    const bpmEl = document.getElementById('bpm');
+    const bloodTimerEl = document.getElementById('blood-timer');
+    const bloodFill = document.getElementById('blood-fill');
+    const btnAction = document.getElementById('btn-action');
+    const btnDrop = document.getElementById('btn-drop');
+
+    function renderLevelGrid() {
+      const grid = document.getElementById('level-grid');
+      grid.innerHTML = '';
+      OPERATIONS.forEach(op => {
+        const btn = document.createElement('button');
+        btn.className = 'lvl-btn';
+        if (completedLevels.includes(op.level)) btn.classList.add('done');
+        if (op.level === currentLevel) btn.classList.add('current');
+        btn.textContent = op.level;
+        btn.onclick = () => {
+          currentLevel = op.level;
+          document.getElementById('start-btn').textContent = `ИГРАТЬ ОПЕРАЦИЮ #${currentLevel}`;
+          renderLevelGrid();
+        };
+        grid.appendChild(btn);
+      });
+      document.getElementById('start-btn').textContent = `ИГРАТЬ ОПЕРАЦИЮ #${currentLevel}`;
+    }
+
+    function openMenu() {
+      isPlaying = false;
+      renderLevelGrid();
+      document.getElementById('ov-title').textContent = 'ВЫБОР ОПЕРАЦИИ (1–50)';
+      document.getElementById('ov-desc').textContent = `Пройдено операций: ${completedLevels.length} из 50. Выбери любую операцию ниже:`;
+      document.getElementById('overlay').style.display = 'flex';
+    }
+
+    function init3D() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b141e);
+      scene.fog = new THREE.FogExp2(0x0b141e, 0.07);
+
+      camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.05, 30);
+      camera.position.set(0, 1.58, 0.88);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      document.body.appendChild(renderer.domElement);
+
+      raycaster = new THREE.Raycaster();
+
+      scene.add(new THREE.AmbientLight(0x6c8eb2, 0.7));
+      const spot = new THREE.SpotLight(0xffffff, 1.5);
+      spot.position.set(0, 2.9, 0.2);
+      spot.angle = Math.PI / 3.6;
+      spot.penumbra = 0.45;
+      spot.castShadow = true;
+      spot.shadow.mapSize.set(1024, 1024);
+      scene.add(spot);
+
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(14, 14),
+        new THREE.MeshStandardMaterial({ color: 0x152334, roughness: 0.75 })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      const opTable = new THREE.Mesh(
+        new THREE.BoxGeometry(1.35, 0.1, 2.2),
+        new THREE.MeshStandardMaterial({ color: 0x8da4b8, metalness: 0.55, roughness: 0.3 })
+      );
+      opTable.position.set(0, 0.85, 0);
+      opTable.receiveShadow = true;
+      scene.add(opTable);
+
+      const toolTable = new THREE.Mesh(
+        new THREE.BoxGeometry(0.75, 0.06, 1.25),
+        new THREE.MeshStandardMaterial({ color: 0xb0c4de, metalness: 0.75, roughness: 0.2 })
+      );
+      toolTable.position.set(0.96, 0.88, 0.15);
+      toolTable.receiveShadow = true;
+      scene.add(toolTable);
+
+      trashTray = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.19, 0.15, 0.06, 24),
+        new THREE.MeshStandardMaterial({ color: 0x33475b, metalness: 0.7 })
+      );
+      trashTray.position.set(-0.48, 0.93, 0.15);
+      trashTray.userData = { type: 'trash', label: 'Лоток для отходов' };
+      scene.add(trashTray);
+
+      donorBox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.14, 0.32),
+        new THREE.MeshStandardMaterial({ color: 0x1d70b8, roughness: 0.3 })
+      );
+      donorBox.position.set(-0.48, 0.97, -0.25);
+      scene.add(donorBox);
+
+      const torso = new THREE.Mesh(
+        new THREE.BoxGeometry(0.56, 0.24, 0.96),
+        new THREE.MeshStandardMaterial({ color: 0xdfa68c, roughness: 0.65 })
+      );
+      torso.position.set(0, 1.02, 0.02);
+      torso.castShadow = true;
+      torso.receiveShadow = true;
+      scene.add(torso);
+
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 20, 20),
+        new THREE.MeshStandardMaterial({ color: 0xdfa68c, roughness: 0.65 })
+      );
+      head.position.set(0, 1.06, -0.62);
+      head.castShadow = true;
+      scene.add(head);
+
+      buildAllTools();
+    }
+
+    function createTool(id, label, color, pos, geo) {
+      const mesh = new THREE.Mesh(
+        geo,
+        new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.25 })
+      );
+      mesh.position.set(...pos);
+      mesh.castShadow = true;
+      mesh.userData = {
+        type: 'tool',
+        toolId: id,
+        label,
+        homePos: new THREE.Vector3(...pos),
+        vel: new THREE.Vector3(0, 0, 0),
+        onGround: true
+      };
+      scene.add(mesh);
+      physicsObjects.push(mesh);
+      return mesh;
+    }
+
+    function buildAllTools() {
+      createTool('scalpel', 'Скальпель', 0xe2f1ff, [0.78, 0.94, -0.25], new THREE.BoxGeometry(0.02, 0.012, 0.24));
+      createTool('saw', 'Костная пила', 0x99aab5, [0.94, 0.94, -0.25], new THREE.BoxGeometry(0.05, 0.015, 0.28));
+      createTool('forceps', 'Щипцы', 0x7fb3d5, [1.10, 0.94, -0.25], new THREE.BoxGeometry(0.03, 0.018, 0.26));
+      createTool('laser', 'Лазерный коагулятор', 0xff3366, [0.78, 0.95, 0.12], new THREE.CylinderGeometry(0.016, 0.022, 0.25, 12));
+      createTool('syringe', 'Шприц (Адреналин)', 0x00ff88, [0.94, 0.95, 0.12], new THREE.CylinderGeometry(0.016, 0.016, 0.23, 12));
+      createTool('needle', 'Хирургическая игла', 0x00ccff, [1.10, 0.94, 0.12], new THREE.TorusGeometry(0.045, 0.008, 8, 20, Math.PI * 1.4));
+      createTool('defib', 'Дефибриллятор', 0xffaa00, [0.92, 0.97, 0.48], new THREE.BoxGeometry(0.16, 0.09, 0.18));
+    }
+
+    function resetToolsToTable() {
+      heldItem = null;
+      grabbedObject = null;
+      btnDrop.style.display = 'none';
+      physicsObjects.forEach(t => {
+        t.position.copy(t.userData.homePos);
+        t.rotation.set(0, 0, 0);
+        t.userData.vel.set(0, 0, 0);
+        t.userData.onGround = true;
+      });
+    }
+
+    function startLevel(lvl) {
+      if (!scene) init3D();
+      document.getElementById('overlay').style.display = 'none';
+
+      activeOp = OPERATIONS[lvl - 1];
+      currentTaskIdx = 0;
+      taskProgress = 0;
+      maxBloodTime = activeOp.bleedTime;
+      bloodTimeLeft = maxBloodTime;
+      isBleeding = false;
+      bpm = 76;
+
+      resetToolsToTable();
+
+      if (levelDynamicGroup) scene.remove(levelDynamicGroup);
+      levelDynamicGroup = new THREE.Group();
+      scene.add(levelDynamicGroup);
+
+      interactables.length = 0;
+      physicsObjects.forEach(t => interactables.push(t));
+      interactables.push(trashTray);
+
+      const isHead = activeOp.zone.id === 'head';
+      const zPos = isHead ? -0.62 : 0.04;
+      const yPos = isHead ? 1.22 : 1.145;
+
+      incisionMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.045, 0.015, isHead ? 0.22 : 0.38),
+        new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x005544 })
+      );
+      incisionMesh.position.set(0, yPos, zPos);
+      incisionMesh.userData = { type: 'incision', isOpen: false };
+      levelDynamicGroup.add(incisionMesh);
+      interactables.push(incisionMesh);
+
+      mainOrganMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.08, 18, 18),
+        new THREE.MeshStandardMaterial({ color: activeOp.zone.organColor, roughness: 0.35 })
+      );
+      mainOrganMesh.position.set(0, yPos - 0.055, zPos);
+      mainOrganMesh.visible = false;
+      mainOrganMesh.userData = { type: 'organ', label: activeOp.zone.organ, removed: false };
+      levelDynamicGroup.add(mainOrganMesh);
+      interactables.push(mainOrganMesh);
+
+      const hasTransplant = activeOp.tasks.some(t => t.type === 'transplant_place');
+      if (hasTransplant) {
+        donorOrganMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.075, 18, 18),
+          new THREE.MeshStandardMaterial({ color: 0xff3355, emissive: 0x330011, roughness: 0.25 })
+        );
+        donorOrganMesh.position.set(-0.48, 1.08, -0.25);
+        donorOrganMesh.userData = { type: 'donor_organ', label: `Донорский орган (${activeOp.zone.organ})`, installed: false };
+        levelDynamicGroup.add(donorOrganMesh);
+        interactables.push(donorOrganMesh);
+      }
+
+      const cauterizeTask = activeOp.tasks.find(t => t.type === 'cauterize');
+      if (cauterizeTask) {
+        for (let k = 0; k < cauterizeTask.count; k++) {
+          const bleeder = new THREE.Mesh(
+            new THREE.SphereGeometry(0.018, 10, 10),
+            new THREE.MeshStandardMaterial({ color: 0xff0022, emissive: 0xaa0000 })
+          );
+          bleeder.position.set((k - 1) * 0.045, yPos - 0.02, zPos + (k % 2 === 0 ? 0.06 : -0.06));
+          bleeder.visible = false;
+          bleeder.userData = { type: 'bleeder', sealed: false, label: 'Кровоточащий сосуд' };
+          levelDynamicGroup.add(bleeder);
+          interactables.push(bleeder);
+        }
+      }
+
+      const extractTask = activeOp.tasks.find(t => t.type === 'extract');
+      if (extractTask) {
+        for (let s = 0; s < extractTask.count; s++) {
+          const shard = new THREE.Mesh(
+            new THREE.ConeGeometry(0.02, 0.065, 5),
+            new THREE.MeshStandardMaterial({ color: 0xd0e8ff, metalness: 0.9, roughness: 0.1 })
+          );
+          shard.position.set(
+            ((s % 2 === 0 ? 1 : -1) * 0.035),
+            yPos - 0.025,
+            zPos - 0.1 + s * 0.055
+          );
+          shard.rotation.set(0.4, s, 0.7);
+          shard.visible = false;
+          shard.userData = { type: 'shard', removed: false, label: 'Осколок' };
+          levelDynamicGroup.add(shard);
+          interactables.push(shard);
+        }
+      }
+
+      updateHUD();
+      isPlaying = true;
+      lastTime = performance.now();
+      animate();
+    }
+
+    function updateHUD() {
+      const task = activeOp.tasks[currentTaskIdx];
+      lvlBadge.textContent = activeOp.title;
+      taskText.textContent = task ? task.text : 'Операция завершена!';
+      stepCounter.textContent = `Этап ${Math.min(currentTaskIdx + 1, activeOp.tasks.length)} из ${activeOp.tasks.length}`;
+    }
+
+    function advanceTask() {
+      taskProgress = 0;
+      currentTaskIdx++;
+      if (currentTaskIdx >= activeOp.tasks.length) {
+        completeOperation();
+      } else {
+        const nextTask = activeOp.tasks[currentTaskIdx];
+        if (nextTask.type === 'inject') bpm = 34;
+        if (nextTask.type === 'defib') bpm = 0;
+        updateHUD();
+      }
+    }
+
+    function completeOperation() {
+      isPlaying = false;
+      isBleeding = false;
+      bpm = 80;
+      if (!completedLevels.includes(activeOp.level)) {
+        completedLevels.push(activeOp.level);
+        localStorage.setItem('surg_done', JSON.stringify(completedLevels));
+      }
+      if (activeOp.level < 50) {
+        currentLevel = activeOp.level + 1;
+        localStorage.setItem('surg_lvl', currentLevel.toString());
+      }
+
+      renderLevelGrid();
+      document.getElementById('ov-title').textContent = `ОПЕРАЦИЯ #${activeOp.level} УСПЕШНА!`;
+      document.getElementById('ov-desc').textContent = `Пациент спасен! В запасе осталось ${bloodTimeLeft.toFixed(1)} сек до критической потери крови.`;
+      document.getElementById('overlay').style.display = 'flex';
+    }
+
+    function failOperation(reason) {
+      isPlaying = false;
+      renderLevelGrid();
+      document.getElementById('ov-title').textContent = 'ОПЕРАЦИЯ ПРОВАЛЕНА';
+      document.getElementById('ov-desc').textContent = reason;
+      document.getElementById('start-btn').textContent = `ПОВТОРИТЬ ОПЕРАЦИЮ #${activeOp.level}`;
+      document.getElementById('overlay').style.display = 'flex';
+    }
+
+    let lastTouchX = 0, lastTouchY = 0;
+    window.addEventListener('touchstart', e => {
+      if (e.target.classList.contains('btn') || e.target.id === 'btn-menu') return;
+      lastTouchX = e.touches[0].clientX;
+      lastTouchY = e.touches[0].clientY;
+    });
+    window.addEventListener('touchmove', e => {
+      if (!isPlaying || e.target.classList.contains('btn')) return;
+      const dx = e.touches[0].clientX - lastTouchX;
+      const dy = e.touches[0].clientY - lastTouchY;
+      lastTouchX = e.touches[0].clientX;
+      lastTouchY = e.touches[0].clientY;
+      yaw -= dx * 0.0055;
+      pitch = Math.max(-1.35, Math.min(0.6, pitch - dy * 0.0055));
+    });
+    window.addEventListener('mousemove', e => {
+      if (!isPlaying || !e.buttons) return;
+      yaw -= e.movementX * 0.004;
+      pitch = Math.max(-1.35, Math.min(0.6, pitch - e.movementY * 0.004));
+    });
+
+    btnDrop.addEventListener('click', () => {
+      if (!heldItem) return;
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      heldItem.userData.vel.copy(forward).multiplyScalar(2.3);
+      heldItem.userData.vel.y = 1.1;
+      heldItem.userData.onGround = false;
+      heldItem = null;
+      grabbedObject = null;
+      btnDrop.style.display = 'none';
+      vibrate(30);
+    });
+
+    btnAction.addEventListener('click', () => {
+      if (!isPlaying || !activeOp) return;
+      const target = getLookTarget();
+      const task = activeOp.tasks[currentTaskIdx];
+
+      if (!heldItem) {
+        if (target && target.userData.type === 'tool') {
+          heldItem = target;
+          heldItem.userData.onGround = true;
+          heldItem.userData.vel.set(0, 0, 0);
+          btnDrop.style.display = 'flex';
+          vibrate(40);
+        }
+        return;
+      }
+
+      const tool = heldItem.userData.toolId;
+
+      if (task.type === 'open' && tool === task.tool && target === incisionMesh && !incisionMesh.userData.isOpen) {
+        incisionMesh.userData.isOpen = true;
+        incisionMesh.material.color.setHex(0x660011);
+        incisionMesh.material.emissive.setHex(0x220000);
+        incisionMesh.scale.set(3.4, 0.7, 1);
+        isBleeding = true;
+
+        levelDynamicGroup.children.forEach(c => {
+          if (c !== incisionMesh && c.userData.type !== 'donor_organ') c.visible = true;
+        });
+        vibrate(120);
+        advanceTask();
+        return;
+      }
+
+      if (task.type === 'cauterize' && tool === 'laser' && target && target.userData.type === 'bleeder' && !target.userData.sealed) {
+        target.userData.sealed = true;
+        target.material.color.setHex(0x333333);
+        target.material.emissive.setHex(0x000000);
+        bloodTimeLeft = Math.min(maxBloodTime, bloodTimeLeft + 3.5);
+        taskProgress++;
+        vibrate(80);
+        if (taskProgress >= task.count) advanceTask();
+        return;
+      }
+
+      if (task.type === 'extract' && tool === 'forceps') {
+        if (!grabbedObject && target && target.userData.type === 'shard' && !target.userData.removed) {
+          grabbedObject = target;
+          vibrate(50);
+        } else if (grabbedObject && grabbedObject.userData.type === 'shard' && target === trashTray) {
+          grabbedObject.userData.removed = true;
+          grabbedObject.position.set(
+            trashTray.position.x + (Math.random() - 0.5) * 0.12,
+            trashTray.position.y + 0.04,
+            trashTray.position.z + (Math.random() - 0.5) * 0.12
+          );
+          grabbedObject = null;
+          taskProgress++;
+          vibrate(70);
+          if (taskProgress >= task.count) advanceTask();
+        }
+        return;
+      }
+
+      if (task.type === 'transplant_remove' && tool === 'forceps') {
+        if (!grabbedObject && target === mainOrganMesh && !mainOrganMesh.userData.removed) {
+          grabbedObject = mainOrganMesh;
+          vibrate(60);
+        } else if (grabbedObject === mainOrganMesh && target === trashTray) {
+          mainOrganMesh.userData.removed = true;
+          mainOrganMesh.position.set(trashTray.position.x, trashTray.position.y + 0.06, trashTray.position.z);
+          grabbedObject = null;
+          vibrate(90);
+          advanceTask();
+        }
+        return;
+      }
+
+      if (task.type === 'transplant_place' && tool === 'forceps') {
+        if (!grabbedObject && target === donorOrganMesh && !donorOrganMesh.userData.installed) {
+          grabbedObject = donorOrganMesh;
+          vibrate(60);
+        } else if (grabbedObject === donorOrganMesh && (target === incisionMesh || target === mainOrganMesh)) {
+          donorOrganMesh.userData.installed = true;
+          const isHead = activeOp.zone.id === 'head';
+          donorOrganMesh.position.set(0, (isHead ? 1.22 : 1.145) - 0.055, isHead ? -0.62 : 0.04);
+          grabbedObject = null;
+          vibrate(100);
+          advanceTask();
+        }
+        return;
+      }
+
+      if (task.type === 'inject' && tool === 'syringe' && (target === mainOrganMesh || target === donorOrganMesh || target === incisionMesh)) {
+        bpm = 84;
+        vibrate(110);
+        advanceTask();
+        return;
+      }
+
+      if (task.type === 'suture' && tool === 'needle' && (target === incisionMesh || target === mainOrganMesh || target === donorOrganMesh)) {
+        incisionMesh.scale.set(1.1, 1, 1);
+        incisionMesh.material.color.setHex(0x00aa66);
+        isBleeding = false;
+        vibrate(100);
+        advanceTask();
+        return;
+      }
+
+      if (task.type === 'defib' && tool === 'defib' && (target === incisionMesh || target === mainOrganMesh || target === donorOrganMesh)) {
+        bpm = 82;
+        vibrate([100, 60, 180]);
+        advanceTask();
+        return;
+      }
+    });
+
+    function getLookTarget() {
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const hits = raycaster.intersectObjects(interactables);
+      for (let h of hits) {
+        if (h.object.visible && h.object !== heldItem && h.object !== grabbedObject && h.distance < 2.3) {
+          return h.object;
+        }
+      }
+      return null;
+    }
+
+    function updatePhysics(dt) {
+      physicsObjects.forEach(obj => {
