@@ -62,27 +62,29 @@
     }
 
     #overlay {
-      position: fixed; inset: 0; background: rgba(7, 13, 22, 0.95);
+      position: fixed; inset: 0; background: rgba(7, 13, 22, 0.97);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 20px; z-index: 20; overflow-y: auto;
+      padding: 20px; z-index: 20;
     }
-    #overlay h1 { font-size: 28px; color: #00ffcc; margin-bottom: 6px; text-align: center; }
-    #ov-desc { color: #b0c4de; max-width: 380px; text-align: center; font-size: 14px; line-height: 1.45; margin-bottom: 16px; }
+    #overlay h1 { font-size: 26px; color: #00ffcc; margin-bottom: 6px; text-align: center; flex-shrink: 0; }
+    #ov-desc { color: #b0c4de; max-width: 380px; text-align: center; font-size: 13px; line-height: 1.4; margin-bottom: 14px; flex-shrink: 0; }
 
     #level-grid {
       display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-      max-width: 360px; width: 100%; max-height: 46vh; overflow-y: auto;
-      padding: 8px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 18px;
+      max-width: 360px; width: 100%; height: 42vh; min-height: 220px;
+      overflow-y: auto; touch-action: pan-y; flex-shrink: 0;
+      padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,255,204,0.2);
+      border-radius: 12px; margin-bottom: 16px;
     }
     .lvl-btn {
-      padding: 10px 0; border-radius: 8px; border: 1px solid rgba(0, 255, 204, 0.3);
-      background: rgba(18, 34, 52, 0.9); color: #fff; font-weight: 700; font-size: 14px;
+      height: 40px; border-radius: 8px; border: 1px solid rgba(0, 255, 204, 0.35);
+      background: rgba(18, 34, 52, 0.95); color: #fff; font-weight: 700; font-size: 14px;
     }
     .lvl-btn.done { background: rgba(0, 200, 120, 0.25); border-color: #00ff88; color: #00ff88; }
-    .lvl-btn.current { border: 2px solid #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.4); }
+    .lvl-btn.current { border: 2px solid #00ffcc; background: rgba(0, 255, 204, 0.2); box-shadow: 0 0 10px rgba(0,255,204,0.4); }
 
     #start-btn {
-      background: linear-gradient(135deg, #00ffcc, #0088ff); color: #04101a;
+      flex-shrink: 0; background: linear-gradient(135deg, #00ffcc, #0088ff); color: #04101a;
       border: none; padding: 14px 36px; font-size: 17px; font-weight: 800; border-radius: 30px;
       box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
     }
@@ -241,6 +243,7 @@
 
     function renderLevelGrid() {
       const grid = document.getElementById('level-grid');
+      if (!grid) return;
       grid.innerHTML = '';
       OPERATIONS.forEach(op => {
         const btn = document.createElement('button');
@@ -394,6 +397,10 @@
     }
 
     function startLevel(lvl) {
+      if (typeof THREE === 'undefined') {
+        alert('Ошибка: файл three.min.js не загрузился!');
+        return;
+      }
       if (!scene) init3D();
       document.getElementById('overlay').style.display = 'none';
 
@@ -541,12 +548,12 @@
 
     let lastTouchX = 0, lastTouchY = 0;
     window.addEventListener('touchstart', e => {
-      if (e.target.classList.contains('btn') || e.target.id === 'btn-menu') return;
+      if (e.target.closest('#overlay') || e.target.classList.contains('btn') || e.target.id === 'btn-menu') return;
       lastTouchX = e.touches[0].clientX;
       lastTouchY = e.touches[0].clientY;
     });
     window.addEventListener('touchmove', e => {
-      if (!isPlaying || e.target.classList.contains('btn')) return;
+      if (!isPlaying || e.target.closest('#overlay') || e.target.classList.contains('btn')) return;
       const dx = e.touches[0].clientX - lastTouchX;
       const dy = e.touches[0].clientY - lastTouchY;
       lastTouchX = e.touches[0].clientX;
@@ -701,3 +708,103 @@
 
     function updatePhysics(dt) {
       physicsObjects.forEach(obj => {
+        if (obj === heldItem || obj.userData.onGround) return;
+        obj.userData.vel.y -= 9.8 * dt;
+        obj.position.addScaledVector(obj.userData.vel, dt);
+        obj.rotation.x += 5 * dt;
+        obj.rotation.z += 3 * dt;
+
+        let floorY = 0.04;
+        if (Math.abs(obj.position.x) < 0.68 && Math.abs(obj.position.z) < 1.1) floorY = 0.92;
+        else if (obj.position.x > 0.58 && obj.position.x < 1.35 && Math.abs(obj.position.z - 0.15) < 0.65) floorY = 0.93;
+
+        if (obj.position.y <= floorY) {
+          obj.position.y = floorY;
+          if (Math.abs(obj.userData.vel.y) > 0.7) {
+            obj.userData.vel.y *= -0.35;
+            obj.userData.vel.x *= 0.65;
+            obj.userData.vel.z *= 0.65;
+          } else {
+            obj.userData.onGround = true;
+            obj.userData.vel.set(0, 0, 0);
+          }
+        }
+      });
+
+      if (heldItem) {
+        const handOffset = new THREE.Vector3(0.22, -0.19, -0.44).applyQuaternion(camera.quaternion);
+        heldItem.position.lerp(camera.position.clone().add(handOffset), 0.35);
+        heldItem.quaternion.slerp(camera.quaternion, 0.35);
+
+        if (grabbedObject) {
+          const tipOffset = new THREE.Vector3(0.22, -0.19, -0.62).applyQuaternion(camera.quaternion);
+          grabbedObject.position.copy(camera.position).add(tipOffset);
+        }
+      }
+    }
+
+    function vibrate(p) {
+      if (navigator.vibrate) navigator.vibrate(p);
+    }
+
+    let lastTime = performance.now();
+    function animate() {
+      if (!isPlaying) return;
+      requestAnimationFrame(animate);
+
+      const now = performance.now();
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+      updatePhysics(dt);
+
+      const organ = (donorOrganMesh && donorOrganMesh.userData.installed) ? donorOrganMesh : mainOrganMesh;
+      if (organ && organ.visible && !organ.userData.removed && bpm > 0) {
+        const s = 1 + Math.sin(now * 0.012 * (bpm / 75)) * 0.13;
+        organ.scale.set(s, s, s);
+      }
+
+      if (isBleeding) {
+        bloodTimeLeft = Math.max(0, bloodTimeLeft - dt);
+        if (bloodTimeLeft <= 0) {
+          failOperation('Время вышло! Произошла полная потеря крови.');
+          return;
+        }
+      }
+
+      const pct = (bloodTimeLeft / maxBloodTime) * 100;
+      bloodFill.style.width = pct + '%';
+      bloodTimerEl.textContent = `Кровь: ${bloodTimeLeft.toFixed(1)} сек`;
+      bpmEl.textContent = bpm + ' BPM';
+      bpmEl.style.color = bpm === 0 ? '#ff2a55' : (bpm < 50 ? '#ffaa00' : '#00ff66');
+
+      const target = getLookTarget();
+      if (target) {
+        crosshair.classList.add('active');
+        hintEl.style.opacity = '1';
+        if (target.userData.type === 'tool') hintEl.textContent = `Взять: ${target.userData.label}`;
+        else if (target === incisionMesh && !incisionMesh.userData.isOpen) hintEl.textContent = 'Вскрыть зону';
+        else if (target === incisionMesh && incisionMesh.userData.isOpen) hintEl.textContent = 'Операционное поле';
+        else if (target === trashTray && grabbedObject) hintEl.textContent = 'Сбросить в лоток';
+        else hintEl.textContent = target.userData.label || 'Взаимодействовать';
+      } else {
+        crosshair.classList.remove('active');
+        hintEl.style.opacity = '0';
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      if (!camera || !renderer) return;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    window.addEventListener('DOMContentLoaded', renderLevelGrid);
+    renderLevelGrid();
+  </script>
+</body>
+</html>
